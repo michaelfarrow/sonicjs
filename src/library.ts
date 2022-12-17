@@ -82,27 +82,26 @@ export function init(dir: string) {
   }
 
   function add(id: string, newItem: LibraryItem) {
-    return;
-    // const parent = newItem.parent ? getItem(newItem.parent) : null;
+    const parent = newItem.parent ? getItem(newItem.parent) : null;
 
-    // if (!hasItem(id)) {
-    //   console.log(
-    //     `Adding ${newItem.type} to library`,
-    //     normalisePath(newItem.path)
-    //   );
-    // } else {
-    //   console.log(
-    //     `Updating ${newItem.type} in library`,
-    //     normalisePath(newItem.path)
-    //   );
-    // }
+    if (!hasItem(id)) {
+      console.log(
+        `Adding ${newItem.type} to library`,
+        normalisePath(newItem.path)
+      );
+    } else {
+      console.log(
+        `Updating ${newItem.type} in library`,
+        normalisePath(newItem.path)
+      );
+    }
 
-    // library[id] = { ...newItem, path: normalisePath(newItem.path) };
+    library[id] = { ...newItem, path: normalisePath(newItem.path) };
 
-    // if (parent) {
-    //   if (!parent.children) parent.children = [];
-    //   if (!parent.children.includes(id)) parent.children.push(id);
-    // }
+    if (parent) {
+      if (!parent.children) parent.children = [];
+      if (!parent.children.includes(id)) parent.children.push(id);
+    }
   }
 
   function remove(id: string, parentId?: string) {
