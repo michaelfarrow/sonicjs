@@ -3,16 +3,15 @@ import bodyParser from 'body-parser';
 
 import api from './api';
 
-import auth from './middleware/auth';
-import response from './middleware/response';
-
 class App {
   public express: Express;
   public api: Router;
+  public rootPath: string;
 
-  constructor() {
+  constructor(rootPath: string) {
     this.express = express();
     this.api = api;
+    this.rootPath = rootPath;
 
     this.mountMiddleware();
     this.mountRoutes();
@@ -29,6 +28,8 @@ class App {
 
     this.express.use('/', router);
     this.express.use('/rest', this.api);
+
+    this.express.use('/lib', express.static(this.rootPath));
   }
 
   private mountMiddleware(): void {
@@ -37,4 +38,6 @@ class App {
   }
 }
 
-export default new App().express;
+export default function app(root: string) {
+  return new App(root).express;
+}

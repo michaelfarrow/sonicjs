@@ -1,10 +1,11 @@
 import app from './App';
-import scanner from './scanner';
+import { init } from './library';
 
 const port = process.env.PORT || 3000;
+const root = '/Users/mike.farrow/music-lib';
 
-scanner('/Users/mike.farrow/music-lib').then((res) => {
-  app
+init(root).then((res) => {
+  app(root)
     .listen(port, () => {
       return console.log(`server is listening on ${port}`);
     })

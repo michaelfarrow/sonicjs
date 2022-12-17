@@ -31,11 +31,9 @@ export default function authMiddleware(
   if (authenticated) {
     next();
   } else {
-    res.json({
-      error: {
-        code: Error.Authentication,
-        message: 'Authentication failed',
-      },
+    next({
+      code: Error.Authentication,
+      message: 'Authentication failed',
     });
   }
 }

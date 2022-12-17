@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { MusicFolder } from '../types';
 
 export type GetMusicFoldersResponse = {
@@ -7,12 +7,17 @@ export type GetMusicFoldersResponse = {
   };
 };
 
-export default function getMusicFolders(req: Request, res: Response): void {
+export default function getMusicFolders(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
   const response: GetMusicFoldersResponse = {
     musicFolders: {
       musicFolder: [{ id: 1, name: 'Music' }],
     },
   };
 
-  res.json(response);
+  res.locals = response;
+  next();
 }
