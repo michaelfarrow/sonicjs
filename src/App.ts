@@ -1,5 +1,6 @@
 import express, { Express, Router } from 'express';
 import bodyParser from 'body-parser';
+import 'express-async-errors';
 
 import api from './api';
 

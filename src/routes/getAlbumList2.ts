@@ -8,25 +8,27 @@ export type GetAlbumList2Response = {
   };
 };
 
-export default function getAlbumList2(
+export default async function getAlbumList2(
   req: Request,
   res: Response,
   next: NextFunction
-): void {
+) {
+  const albums = await allAlbums();
+
   const response: any = {
     albumList2: {
-      album: allAlbums().map(([id, album]) => {
+      album: albums.map((album) => {
         const albumImages = images(album);
         return {
-          id: id,
-          name: album.name,
+          id: album.id,
+          name: album.meta?.title || album.name,
           // artist: 'Test',
           artistId: album.parent,
           coverArt:
             (albumImages.find((image) =>
               ['poster', 'cover'].includes(image.name)
             )?.path &&
-              id) ||
+              album.id) ||
             undefined,
           songCount: 2,
           created: new Date(),

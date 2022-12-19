@@ -1,37 +1,37 @@
 import { NextFunction, Request, Response } from 'express';
 import { ArtistWithAlbumsID3 } from '../types';
-import { item, albums, images } from '../library';
+import { artist, albums, images } from '../library';
 import { Error } from '../error';
 
 export type GetArtistResponse = {
   artist: ArtistWithAlbumsID3;
 };
 
-export default function getArtist(
+export default async function getArtist(
   req: Request,
   res: Response,
   next: NextFunction
-): void {
+) {
   const { id } = req.query;
   const _id = (id || '') as string;
 
-  const artist = item(_id, 'artist');
+  const libArtist = await artist(_id);
 
-  if (!artist) {
+  if (!libArtist) {
     return next({
       code: Error.NotFound,
       message: 'Artist not found',
     });
   }
 
-  const artistAlbums = albums(artist);
-  const artistImages = images(artist);
+  const artistAlbums = await albums(libArtist);
+  const artistImages = images(libArtist);
 
   const response: GetArtistResponse = {
     artist: {
       id: _id,
       albumCount: artistAlbums.length,
-      name: artist.name,
+      name: libArtist.meta?.name || libArtist.name,
       coverArt:
         (artistImages.find((image) => ['poster', 'cover'].includes(image.name))
           ?.path &&
@@ -42,7 +42,7 @@ export default function getArtist(
         const albumImages = images(album);
         return {
           id: album.id,
-          name: album.name,
+          name: album.meta?.title || album.name,
           created: new Date(),
           duration: 0,
           songCount: 0,

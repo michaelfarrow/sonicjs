@@ -1,16 +1,40 @@
 import path from 'path';
 import chokidar from 'chokidar';
-import { v5 as uuidv5 } from 'uuid';
+import fs from 'fs-extra';
+import { queue } from './queue';
+import { CACHE_DIR } from './config';
+import { metaPath } from './utils/path';
+import { hash } from './utils/hash';
+import cleanImages from './jobs/cleanImages';
+import removeImage from './jobs/removeImage';
+import cleanMeta from './jobs/cleanMeta';
+import ensureMeta from './jobs/ensureMeta';
+import removeMeta from './jobs/removeMeta';
+import ensureTrackMeta from './jobs/ensureTrackMeta';
 
 const MUSIC_TYPES = ['m4a', 'mp3'];
 const IMAGE_TYPES = ['jpg', 'jpeg', 'png', 'webp'];
 const IMAGE_NAMES = ['cover', 'poster', 'backdrop'];
 
-const UUID_NAMESPACE = '9933e1a5-ee79-4e15-be29-bf7d49de728d';
+export type MetadataArtist = {
+  name: string;
+};
 
-export type LibraryItemType = 'album' | 'artist' | 'track' | 'image';
+export type MetadataAlbum = {
+  title: string;
+};
+
+export type MetadataTrack = {
+  title: string;
+  genre: string[];
+  artist: string[];
+  albumArtist: string[];
+  duration: number;
+  bitRate: number;
+};
 
 export type LibraryItem = {
+  id: string;
   type: LibraryItemType;
   parent?: string;
   name: string;
@@ -18,104 +42,201 @@ export type LibraryItem = {
   children?: string[];
 };
 
-let library: { [id: string]: LibraryItem } = {};
+export type LibraryItemWithMeta<MetaType> = LibraryItem & {
+  meta?: MetaType;
+};
+
+export type LibraryItemArtist = LibraryItemWithMeta<MetadataArtist>;
+export type LibraryItemAlbum = LibraryItemWithMeta<MetadataAlbum>;
+export type LibraryItemTrack = LibraryItemWithMeta<MetadataTrack>;
+
+export type LibraryItemTypes = {
+  artist: LibraryItemArtist;
+  album: LibraryItemAlbum;
+  track: LibraryItemTrack;
+  image: LibraryItem;
+  mbid: LibraryItem;
+};
+
+export type LibraryItemType = keyof LibraryItemTypes;
+
+const library: { [id: string]: LibraryItem } = {};
 
 function isType(p: string, types: string[]) {
   return types.map((t) => `.${t}`).includes(path.extname(p));
 }
 
-function hash(str: string) {
-  return uuidv5(str, UUID_NAMESPACE);
-}
-
-function hasItem(id: string): Boolean {
+export function hasItem(id: string): Boolean {
   return !!library[id];
 }
 
-function getItem(id: string): LibraryItem | null {
+export function getItem(id: string): LibraryItem | null {
   return library[id] || null;
+}
+
+function getItemType<T extends keyof LibraryItemTypes>(
+  id: string,
+  type: T
+): LibraryItemTypes[T] | null {
+  const libraryItem = library[id];
+  if (libraryItem && libraryItem.type === type)
+    return libraryItem as LibraryItemTypes[T];
+  return null;
+}
+
+function add(newItem: LibraryItem) {
+  const parent = newItem.parent ? getItem(newItem.parent) : null;
+
+  if (!hasItem(newItem.id)) {
+    console.log(`Adding ${newItem.type} to library`, newItem.path);
+  } else {
+    console.log(`Updating ${newItem.type} in library`, newItem.path);
+  }
+
+  library[newItem.id] = { ...newItem, path: newItem.path };
+
+  if (parent) {
+    if (!parent.children) parent.children = [];
+    if (!parent.children.includes(newItem.id)) parent.children.push(newItem.id);
+  }
+
+  switch (newItem.type) {
+    case 'track':
+      queue(ensureTrackMeta(newItem));
+      break;
+    case 'mbid':
+      queue(ensureMeta(newItem));
+      break;
+  }
+}
+
+function remove(id: string, parentId?: string) {
+  const item = getItem(id);
+  const parent = parentId ? getItem(parentId) : null;
+
+  if (item) {
+    if (item.type === 'mbid' && parent) {
+      queue(removeMeta(parent.id));
+    }
+
+    if (item.type === 'image') {
+      queue(removeImage(item.id));
+    }
+
+    queue(removeMeta(item.id));
+
+    console.log(`Removing ${id} from library`);
+    delete library[id];
+  }
+
+  if (parent && parent.children) {
+    parent.children = parent.children.filter((c) => c !== id);
+  }
 }
 
 export function items() {
   return Object.entries(library);
 }
 
-export function item(id: string, type?: LibraryItemType): LibraryItem | null {
-  const found = library[id] || null;
-  return type ? (found?.type === type ? found : null) : found;
+export function item(id: string): LibraryItem | null {
+  return library[id] || null;
 }
 
-export function allAlbums() {
-  return items().filter(([id, i]) => i.type === 'album');
+export async function artist(id: string) {
+  const item = getItemType(id, 'artist');
+  return item && attachMetadata(item);
 }
 
-export function allArtists() {
-  return items().filter(([id, i]) => i.type === 'artist');
+export async function album(id: string) {
+  const item = getItemType(id, 'album');
+  return item && attachMetadata(item);
 }
 
-export function children(
-  parent: LibraryItem
-): ({ id: string } & LibraryItem)[] {
+export async function track(id: string) {
+  const item = getItemType(id, 'track');
+  return item && attachMetadata(item);
+}
+
+export async function image(id: string) {
+  const item = getItemType(id, 'image');
+  return item && attachMetadata(item);
+}
+
+export function filteredItems(
+  type: LibraryItemType,
+  lookupItems?: [string, LibraryItem][]
+) {
+  return (lookupItems || items()).filter(([id, i]) => i.type === type);
+}
+
+export async function allAlbums() {
+  return await attachMetadataMultiple(
+    normaliseLibItems<LibraryItemAlbum>(filteredItems('album'))
+  );
+}
+
+export async function allArtists() {
+  return await attachMetadataMultiple(
+    normaliseLibItems<LibraryItemArtist>(filteredItems('artist'))
+  );
+}
+
+export function allMbid() {
+  return items().filter(([id, i]) => i.type === 'mbid');
+}
+
+export function children(parent: LibraryItem): LibraryItem[] {
   return (parent.children || [])
     .filter((c) => !!library[c])
-    .map((c) => ({ id: c, ...library[c] }));
+    .map((c) => ({ ...library[c] }));
 }
 
-export function albums(parent: LibraryItem) {
-  return children(parent).filter((c) => c.type === 'album');
+export function filteredChildren(parent: LibraryItem, type: LibraryItemType) {
+  return children(parent).filter((c) => c.type === type);
 }
 
-export function tracks(parent: LibraryItem) {
-  return children(parent).filter((c) => c.type === 'track');
+export async function albums(parent: LibraryItem) {
+  return await attachMetadataMultiple(
+    filteredChildren(parent, 'album') as LibraryItemAlbum[]
+  );
+}
+
+export async function tracks(parent: LibraryItem) {
+  return await attachMetadataMultiple(
+    filteredChildren(parent, 'track') as LibraryItemTrack[]
+  );
 }
 
 export function images(parent: LibraryItem) {
-  return children(parent).filter((c) => c.type === 'image');
+  return filteredChildren(parent, 'image');
 }
 
-export function init(dir: string) {
+async function attachMetadata<T extends LibraryItemWithMeta<any>>(item: T) {
+  const metaP = metaPath(item.id);
+  if (await fs.pathExists(metaP)) {
+    return { ...item, meta: await fs.readJSON(metaP) };
+  }
+  return { ...item };
+}
+
+async function attachMetadataMultiple<T extends LibraryItemWithMeta<any>>(
+  items: T[]
+) {
+  const resItems: T[] = [];
+  for (const item of items) {
+    resItems.push(await attachMetadata(item));
+  }
+  return resItems;
+}
+
+function normaliseLibItems<T extends LibraryItem>(items: [string, T][]) {
+  return items.map(([id, i]) => i);
+}
+
+export async function init(dir: string) {
+  await fs.ensureDir(CACHE_DIR);
+
   const watchDir = path.resolve(dir);
-
-  function normalisePath(p: string) {
-    return p;
-    // return p.substring(watchDir.length + 1);
-  }
-
-  function add(id: string, newItem: LibraryItem) {
-    const parent = newItem.parent ? getItem(newItem.parent) : null;
-
-    if (!hasItem(id)) {
-      console.log(
-        `Adding ${newItem.type} to library`,
-        normalisePath(newItem.path)
-      );
-    } else {
-      console.log(
-        `Updating ${newItem.type} in library`,
-        normalisePath(newItem.path)
-      );
-    }
-
-    library[id] = { ...newItem, path: normalisePath(newItem.path) };
-
-    if (parent) {
-      if (!parent.children) parent.children = [];
-      if (!parent.children.includes(id)) parent.children.push(id);
-    }
-  }
-
-  function remove(id: string, parentId?: string) {
-    const parent = parentId ? getItem(parentId) : null;
-
-    if (hasItem(id)) {
-      console.log(`Removing ${id} from library`);
-      delete library[id];
-    }
-
-    if (parent && parent.children) {
-      parent.children = parent.children.filter((c) => c !== id);
-    }
-  }
 
   return new Promise((resolve, reject) => {
     chokidar
@@ -129,14 +250,16 @@ export function init(dir: string) {
 
         if (pathParts.length === 1) {
           // Artist
-          add(id, {
+          add({
+            id,
             type: 'artist',
             name: pathParts[0],
             path: dirPath,
           });
         } else if (pathParts.length === 2) {
           // Album
-          add(id, {
+          add({
+            id,
             type: 'album',
             parent: hash(path.dirname(dirPath)),
             name: pathParts[1],
@@ -163,7 +286,8 @@ export function init(dir: string) {
         const pathParts = relativePath.split(/\//);
 
         if (pathParts.length === 3 && isType(filePath, MUSIC_TYPES)) {
-          add(hash(filePath), {
+          add({
+            id: hash(filePath),
             type: 'track',
             name: path.basename(pathParts[2], path.extname(pathParts[2])),
             parent: hash(path.dirname(filePath)),
@@ -179,18 +303,34 @@ export function init(dir: string) {
           const name = path.basename(lastPathPart, path.extname(lastPathPart));
 
           IMAGE_NAMES.includes(name) &&
-            add(hash(filePath), {
+            add({
+              id: hash(filePath),
               type: 'image',
               name: name,
               parent: hash(path.dirname(filePath)),
               path: filePath,
             });
         }
+
+        if (
+          (pathParts.length === 3 || pathParts.length === 2) &&
+          path.basename(filePath) === 'mbid'
+        ) {
+          add({
+            id: hash(filePath),
+            type: 'mbid',
+            name: 'mbid',
+            parent: hash(path.dirname(filePath)),
+            path: filePath,
+          });
+        }
       })
       .on('unlink', (filePath) => {
         remove(hash(filePath), hash(path.dirname(filePath)));
       })
-      .on('ready', () => {
+      .on('ready', async () => {
+        queue(cleanImages);
+        queue(cleanMeta);
         console.log('Initial library scan complete.');
         resolve(library);
       })

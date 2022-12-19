@@ -12,11 +12,13 @@ export type GetArtistsResponse = {
   };
 };
 
-export default function getArtists(
+export default async function getArtists(
   req: Request,
   res: Response,
   next: NextFunction
-): void {
+) {
+  const artists = await allArtists();
+
   const response: GetArtistsResponse = {
     artists: {
       ignoredArticles: 'The El La Los Las Le Les',
@@ -24,22 +26,24 @@ export default function getArtists(
         // TODO: Alpha index
         {
           name: 'All',
-          artist: allArtists().map(([id, artist]) => {
-            const artistImages = images(artist);
-            const artistAlbums = albums(artist);
-            return {
-              id: id,
-              name: artist.name,
-              albumCount: artistAlbums.length,
-              coverArt:
-                // TODO: standardise valid names
-                (artistImages.find((image) =>
-                  ['poster', 'cover'].includes(image.name)
-                )?.path &&
-                  id) ||
-                undefined,
-            };
-          }),
+          artist: await Promise.all(
+            artists.map(async (artist) => {
+              const artistImages = images(artist);
+              const artistAlbums = await albums(artist);
+              return {
+                id: artist.id,
+                name: artist.meta?.name || artist.name,
+                albumCount: artistAlbums.length,
+                coverArt:
+                  // TODO: standardise valid names
+                  (artistImages.find((image) =>
+                    ['poster', 'cover'].includes(image.name)
+                  )?.path &&
+                    artist.id) ||
+                  undefined,
+              };
+            })
+          ),
         },
       ],
     },
