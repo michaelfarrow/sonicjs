@@ -31,6 +31,8 @@ export type MetadataTrack = {
   albumArtist: string[];
   duration: number;
   bitRate: number;
+  track: number;
+  disc?: number;
 };
 
 export type LibraryItem = {
@@ -61,6 +63,7 @@ export type LibraryItemTypes = {
 export type LibraryItemType = keyof LibraryItemTypes;
 
 const library: { [id: string]: LibraryItem } = {};
+let metadataCache: { [id: string]: any } = {};
 
 function isType(p: string, types: string[]) {
   return types.map((t) => `.${t}`).includes(path.extname(p));
@@ -74,7 +77,7 @@ export function getItem(id: string): LibraryItem | null {
   return library[id] || null;
 }
 
-function getItemType<T extends keyof LibraryItemTypes>(
+export function getItemType<T extends keyof LibraryItemTypes>(
   id: string,
   type: T
 ): LibraryItemTypes[T] | null {
@@ -135,7 +138,7 @@ function remove(id: string, parentId?: string) {
 }
 
 export function items() {
-  return Object.entries(library);
+  return Object.values(library);
 }
 
 export function item(id: string): LibraryItem | null {
@@ -162,27 +165,22 @@ export async function image(id: string) {
   return item && attachMetadata(item);
 }
 
-export function filteredItems(
-  type: LibraryItemType,
-  lookupItems?: [string, LibraryItem][]
-) {
-  return (lookupItems || items()).filter(([id, i]) => i.type === type);
+export function filteredItems<T extends keyof LibraryItemTypes>(
+  type: T
+): LibraryItemTypes[T][] {
+  return items().filter((i) => i.type === type);
 }
 
 export async function allAlbums() {
-  return await attachMetadataMultiple(
-    normaliseLibItems<LibraryItemAlbum>(filteredItems('album'))
-  );
+  return await attachMetadataMultiple(filteredItems('album'));
 }
 
 export async function allArtists() {
-  return await attachMetadataMultiple(
-    normaliseLibItems<LibraryItemArtist>(filteredItems('artist'))
-  );
+  return await attachMetadataMultiple(filteredItems('artist'));
 }
 
 export function allMbid() {
-  return items().filter(([id, i]) => i.type === 'mbid');
+  return filteredItems('mbid');
 }
 
 export function children(parent: LibraryItem): LibraryItem[] {
@@ -211,26 +209,34 @@ export function images(parent: LibraryItem) {
   return filteredChildren(parent, 'image');
 }
 
-async function attachMetadata<T extends LibraryItemWithMeta<any>>(item: T) {
+export function clearMetadataCache() {
+  metadataCache = {};
+}
+
+export async function attachMetadata<T extends LibraryItemWithMeta<any>>(
+  item: T
+) {
   const metaP = metaPath(item.id);
-  if (await fs.pathExists(metaP)) {
-    return { ...item, meta: await fs.readJSON(metaP) };
+  if (metadataCache[item.id]) {
+    // console.log('getting meta from cache', item.type, item.id);
+    return { ...item, meta: metadataCache[item.id] };
+  } else if (await fs.pathExists(metaP)) {
+    // console.log('gtting meta from file', item.type, item.id);
+    const metaData = await fs.readJSON(metaP);
+    metadataCache[item.id] = metaData;
+    return { ...item, meta: metaData };
   }
   return { ...item };
 }
 
-async function attachMetadataMultiple<T extends LibraryItemWithMeta<any>>(
-  items: T[]
-) {
+export async function attachMetadataMultiple<
+  T extends LibraryItemWithMeta<any>
+>(items: T[]) {
   const resItems: T[] = [];
   for (const item of items) {
     resItems.push(await attachMetadata(item));
   }
   return resItems;
-}
-
-function normaliseLibItems<T extends LibraryItem>(items: [string, T][]) {
-  return items.map(([id, i]) => i);
 }
 
 export async function init(dir: string) {

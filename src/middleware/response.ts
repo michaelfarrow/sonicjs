@@ -2,11 +2,13 @@ import { Request, Response } from 'express';
 import xml from 'xml';
 import _ from 'lodash';
 
-type Node = {
-  type: string;
-  attrs: { [key: string]: any };
-  children: Node[];
-};
+type Node =
+  | {
+      type: string;
+      attrs: { [key: string]: any };
+      children: Node[];
+    }
+  | string;
 
 function getXmlNodeInfo(o: any) {
   const attrs: any = {};
@@ -25,8 +27,14 @@ function getXmlNodeInfo(o: any) {
         type: key,
         ...getXmlNodeInfo(val),
       });
+    } else if (key === 'value') {
+      children.push(String(val));
     } else {
-      attrs[key] = val instanceof Date ? val.toDateString() : val;
+      if (val instanceof Date) {
+        attrs[key] = val.toDateString();
+      } else if (val !== undefined && val !== null) {
+        attrs[key] = val;
+      }
     }
   });
 
@@ -37,12 +45,14 @@ function getXmlNodeInfo(o: any) {
 }
 
 function toXmlNode(node: Node): xml.XmlObject {
-  return {
-    [node.type]: [
-      { _attr: node.attrs },
-      ...(node.children.length ? node.children.map(toXmlNode) : ['']),
-    ],
-  };
+  if (typeof node === 'object')
+    return {
+      [node.type]: [
+        { _attr: node.attrs },
+        ...(node.children.length ? node.children.map(toXmlNode) : ['']),
+      ],
+    };
+  return node;
 }
 
 function toXml(o: any) {

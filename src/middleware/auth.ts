@@ -17,6 +17,10 @@ export default function authMiddleware(
   const token = String(req.query.t || '');
   const salt = String(req.query.s || '');
 
+  if (req.path == '/ping.view') {
+    return next();
+  }
+
   if (password.length) {
     authenticated = username === USERNAME && password === PASSWORD;
   } else {

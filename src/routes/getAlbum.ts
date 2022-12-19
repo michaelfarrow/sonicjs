@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { AlbumWithSongsID3 } from '../types';
-import { album, artist, tracks, images } from '../library';
+import { album } from '../library';
+import { albumWithSongsResponse } from '../api-response';
 import { Error } from '../error';
 
 export type GetAlbumResponse = {
@@ -24,36 +25,8 @@ export default async function getArtist(
     });
   }
 
-  const albumArtist = libAlbum.parent ? await artist(libAlbum.parent) : null;
-  const albumTracks = await tracks(libAlbum);
-  const albumImages = images(libAlbum);
-
-  const albumCover =
-    (albumImages.find((image) => ['cover'].includes(image.name))?.path &&
-      _id) ||
-    undefined;
-
   const response: GetAlbumResponse = {
-    album: {
-      id: libAlbum.id,
-      name: libAlbum.meta?.title || libAlbum.name,
-      artist: albumArtist?.meta?.name || albumArtist?.name,
-      artistId: albumArtist?.id,
-      coverArt: albumCover,
-      songCount: 0,
-      duration: 0,
-      created: new Date(),
-      song: albumTracks.map((track) => ({
-        id: track.id,
-        title: track.meta?.title || track.name,
-        artist: track.meta?.artist.join('; '),
-        album: libAlbum.meta?.title || libAlbum.name,
-        albumId: libAlbum.id,
-        coverArt: albumCover,
-        bitRate: track.meta?.bitRate && Math.round(track.meta?.bitRate / 1000),
-        duration: track.meta?.duration && track.meta.duration,
-      })),
-    },
+    album: await albumWithSongsResponse(libAlbum),
   };
 
   res.locals = response;

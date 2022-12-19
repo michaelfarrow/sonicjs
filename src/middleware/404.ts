@@ -7,6 +7,7 @@ export default function notFoundMiddleware(
   next: NextFunction
 ): void {
   if (!Object.keys(res.locals).length) {
+    console.log('Not found', req.path);
     next({ code: Error.NotFound, message: 'Not Found' });
   } else {
     next();

@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { ArtistID3 } from '../types';
-import { allArtists, albums, images } from '../library';
+import { allArtists } from '../library';
+
+import { artistResponse } from '../api-response';
 
 export type GetArtistsResponse = {
   artists: {
@@ -17,7 +19,12 @@ export default async function getArtists(
   res: Response,
   next: NextFunction
 ) {
-  const artists = await allArtists();
+  const libArtists = await allArtists();
+  const artists: ArtistID3[] = [];
+
+  for (const artist of libArtists) {
+    artists.push(await artistResponse(artist));
+  }
 
   const response: GetArtistsResponse = {
     artists: {
@@ -26,24 +33,7 @@ export default async function getArtists(
         // TODO: Alpha index
         {
           name: 'All',
-          artist: await Promise.all(
-            artists.map(async (artist) => {
-              const artistImages = images(artist);
-              const artistAlbums = await albums(artist);
-              return {
-                id: artist.id,
-                name: artist.meta?.name || artist.name,
-                albumCount: artistAlbums.length,
-                coverArt:
-                  // TODO: standardise valid names
-                  (artistImages.find((image) =>
-                    ['poster', 'cover'].includes(image.name)
-                  )?.path &&
-                    artist.id) ||
-                  undefined,
-              };
-            })
-          ),
+          artist: artists,
         },
       ],
     },

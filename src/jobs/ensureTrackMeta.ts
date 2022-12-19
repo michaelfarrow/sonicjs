@@ -20,6 +20,8 @@ export default function ensureTrackMeta(track: LibraryItem) {
         genre: _.flatten((meta.common.genre || []).map(splitGenres)),
         duration: meta.format.duration || 0,
         bitRate: meta.format.bitrate || 0,
+        track: meta.common.track.no || 0,
+        disc: meta.common.disk.no || undefined,
       };
       await fs.outputJSON(metaP, _meta);
     }

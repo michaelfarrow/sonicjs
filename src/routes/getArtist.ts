@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { ArtistWithAlbumsID3 } from '../types';
-import { artist, albums, images } from '../library';
+import { artist } from '../library';
 import { Error } from '../error';
+import { artistWithAlbumsResponse } from '../api-response';
 
 export type GetArtistResponse = {
   artist: ArtistWithAlbumsID3;
@@ -24,39 +25,8 @@ export default async function getArtist(
     });
   }
 
-  const artistAlbums = await albums(libArtist);
-  const artistImages = images(libArtist);
-
   const response: GetArtistResponse = {
-    artist: {
-      id: _id,
-      albumCount: artistAlbums.length,
-      name: libArtist.meta?.name || libArtist.name,
-      coverArt:
-        (artistImages.find((image) => ['poster', 'cover'].includes(image.name))
-          ?.path &&
-          _id) ||
-        undefined,
-      // starred: false,
-      album: artistAlbums.map((album) => {
-        const albumImages = images(album);
-        return {
-          id: album.id,
-          name: album.meta?.title || album.name,
-          created: new Date(),
-          duration: 0,
-          songCount: 0,
-          artist: artist.name,
-          artistId: _id,
-          coverArt:
-            (albumImages.find((image) =>
-              ['poster', 'cover'].includes(image.name)
-            )?.path &&
-              album.id) ||
-            undefined,
-        };
-      }),
-    },
+    artist: await artistWithAlbumsResponse(libArtist),
   };
 
   res.locals = response;
