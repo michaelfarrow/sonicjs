@@ -11,6 +11,7 @@ export default function ensureTrackMeta(track: LibraryItem) {
   return async () => {
     const metaP = metaPath(track.id);
     if (!fs.pathExists(metaP)) {
+      console.log('Looking up track metadata', track.name);
       const meta = await parseFile(track.path);
       const _meta: MetadataTrack = {
         title: meta.common.title || '',
