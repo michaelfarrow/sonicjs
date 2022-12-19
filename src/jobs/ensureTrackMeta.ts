@@ -9,16 +9,19 @@ const splitGenres = (genres: string) => genres.split(/\s*,\s*/g);
 
 export default function ensureTrackMeta(track: LibraryItem) {
   return async () => {
-    const meta = await parseFile(track.path);
-    const _meta: MetadataTrack = {
-      title: meta.common.title || '',
-      artist: splitArtists(meta.common.artist || ''),
-      albumArtist: splitArtists(meta.common.albumartist || ''),
-      genre: _.flatten((meta.common.genre || []).map(splitGenres)),
-      duration: meta.format.duration || 0,
-      bitRate: meta.format.bitrate || 0,
-    };
-    await fs.outputJSON(metaPath(track.id), _meta);
+    const metaP = metaPath(track.id);
+    if (!fs.pathExists(metaP)) {
+      const meta = await parseFile(track.path);
+      const _meta: MetadataTrack = {
+        title: meta.common.title || '',
+        artist: splitArtists(meta.common.artist || ''),
+        albumArtist: splitArtists(meta.common.albumartist || ''),
+        genre: _.flatten((meta.common.genre || []).map(splitGenres)),
+        duration: meta.format.duration || 0,
+        bitRate: meta.format.bitrate || 0,
+      };
+      await fs.outputJSON(metaPath(track.id), _meta);
+    }
     return true;
   };
 }
