@@ -14,8 +14,7 @@ export default function ensureMeta(item: LibraryItem) {
 
     if (parent && ['album', 'artist'].includes(parent.type)) {
       const metaP = metaPath(parent.id);
-      const metaFileExists = await fs.pathExists(metaP);
-      if (!metaFileExists) {
+      if (!(await fs.pathExists(metaP))) {
         const id = await fs.readFile(item.path, 'utf-8');
         if (id) {
           console.log('Looking up metadata', parent.name);

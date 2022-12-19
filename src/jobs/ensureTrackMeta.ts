@@ -10,7 +10,7 @@ const splitGenres = (genres: string) => genres.split(/\s*,\s*/g);
 export default function ensureTrackMeta(track: LibraryItem) {
   return async () => {
     const metaP = metaPath(track.id);
-    if (!fs.pathExists(metaP)) {
+    if (!(await fs.pathExists(metaP))) {
       console.log('Looking up track metadata', track.name);
       const meta = await parseFile(track.path);
       const _meta: MetadataTrack = {
@@ -21,7 +21,7 @@ export default function ensureTrackMeta(track: LibraryItem) {
         duration: meta.format.duration || 0,
         bitRate: meta.format.bitrate || 0,
       };
-      await fs.outputJSON(metaPath(track.id), _meta);
+      await fs.outputJSON(metaP, _meta);
     }
     return true;
   };
