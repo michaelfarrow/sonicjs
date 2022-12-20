@@ -210,7 +210,11 @@ export function images(parent: LibraryItem) {
 }
 
 export function clearMetadataCache() {
-  metadataCache = {};
+  // metadataCache = {};
+}
+
+export function cacheMetadata(libItem: LibraryItem, meta: any) {
+  metadataCache[libItem.id] = meta;
 }
 
 export async function attachMetadata<T extends LibraryItemWithMeta<any>>(

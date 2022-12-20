@@ -5,6 +5,7 @@ import {
   MetadataArtist,
   MetadataAlbum,
   getItem,
+  cacheMetadata,
 } from '../library';
 import mbApi from '../utils/mbApi';
 
@@ -25,6 +26,7 @@ export default function ensureMeta(item: LibraryItem) {
                 name: infoArtist.name,
               };
               await fs.outputJSON(metaP, metaArtist);
+              cacheMetadata(item, metaArtist);
               break;
             case 'album':
               const infoRelease = await mbApi.lookupRelease(id);
@@ -32,9 +34,12 @@ export default function ensureMeta(item: LibraryItem) {
                 title: infoRelease.title,
               };
               await fs.outputJSON(metaP, metaAlbum, {});
+              cacheMetadata(item, metaAlbum);
               break;
           }
         }
+      } else {
+        cacheMetadata(item, await fs.readJson(metaP));
       }
     }
 

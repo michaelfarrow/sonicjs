@@ -1,7 +1,7 @@
 import { parseFile } from 'music-metadata';
 import _ from 'lodash';
 import fs from 'fs-extra';
-import { LibraryItem, MetadataTrack } from '../library';
+import { LibraryItem, MetadataTrack, cacheMetadata } from '../library';
 import { metaPath } from '../utils/path';
 
 const splitArtists = (artists: string) => artists.split(/\s*;\s*/g);
@@ -24,6 +24,9 @@ export default function ensureTrackMeta(track: LibraryItem) {
         disc: meta.common.disk.no || undefined,
       };
       await fs.outputJSON(metaP, _meta);
+      cacheMetadata(track, _meta);
+    } else {
+      cacheMetadata(track, await fs.readJSON(metaP));
     }
     return true;
   };
