@@ -1,7 +1,7 @@
 import path from 'path';
 import chokidar from 'chokidar';
 import fs from 'fs-extra';
-import { queue } from './queue';
+import { queue, q } from './queue';
 import { CACHE_DIR } from './config';
 import { metaPath } from './utils/path';
 import { hash } from './utils/hash';
@@ -88,6 +88,8 @@ export function getItemType<T extends keyof LibraryItemTypes>(
 }
 
 function add(newItem: LibraryItem) {
+  remove(newItem.id);
+
   const parent = newItem.parent ? getItem(newItem.parent) : null;
 
   if (!hasItem(newItem.id)) {
@@ -135,6 +137,8 @@ function remove(id: string, parentId?: string) {
   if (parent && parent.children) {
     parent.children = parent.children.filter((c) => c !== id);
   }
+
+  removeMetadata(id);
 }
 
 export function items() {
@@ -217,6 +221,10 @@ export function cacheMetadata(libItem: LibraryItem, meta: any) {
   metadataCache[libItem.id] = meta;
 }
 
+export function removeMetadata(id: string) {
+  if (metadataCache[id]) delete metadataCache[id];
+}
+
 export async function attachMetadata<T extends LibraryItemWithMeta<any>>(
   item: T
 ) {
@@ -247,6 +255,53 @@ export async function init(dir: string) {
   await fs.ensureDir(CACHE_DIR);
 
   const watchDir = path.resolve(dir);
+
+  const onAddChange = (filePath: string) => {
+    const relativePath = filePath.substring(watchDir.length + 1);
+    const pathParts = relativePath.split(/\//);
+    const id = hash(filePath);
+
+    if (pathParts.length === 3 && isType(filePath, MUSIC_TYPES)) {
+      add({
+        id,
+        type: 'track',
+        name: path.basename(pathParts[2], path.extname(pathParts[2])),
+        parent: hash(path.dirname(filePath)),
+        path: filePath,
+      });
+    }
+
+    if (
+      (pathParts.length === 3 || pathParts.length === 2) &&
+      isType(filePath, IMAGE_TYPES)
+    ) {
+      const lastPathPart = pathParts[pathParts.length - 1];
+      const name = path.basename(lastPathPart, path.extname(lastPathPart));
+
+      if (IMAGE_NAMES.includes(name)) {
+        add({
+          id,
+          type: 'image',
+          name: name,
+          parent: hash(path.dirname(filePath)),
+          path: filePath,
+        });
+      }
+    }
+
+    if (
+      (pathParts.length === 3 || pathParts.length === 2) &&
+      path.basename(filePath) === 'mbid'
+    ) {
+      add({
+        id,
+        type: 'mbid',
+        name: 'mbid',
+        parent: hash(path.dirname(filePath)),
+        path: filePath,
+      });
+    }
+  };
 
   return new Promise((resolve, reject) => {
     chokidar
@@ -291,50 +346,8 @@ export async function init(dir: string) {
           remove(id, hash(path.dirname(dirPath)));
         }
       })
-      .on('add', (filePath) => {
-        const relativePath = filePath.substring(watchDir.length + 1);
-        const pathParts = relativePath.split(/\//);
-
-        if (pathParts.length === 3 && isType(filePath, MUSIC_TYPES)) {
-          add({
-            id: hash(filePath),
-            type: 'track',
-            name: path.basename(pathParts[2], path.extname(pathParts[2])),
-            parent: hash(path.dirname(filePath)),
-            path: filePath,
-          });
-        }
-
-        if (
-          (pathParts.length === 3 || pathParts.length === 2) &&
-          isType(filePath, IMAGE_TYPES)
-        ) {
-          const lastPathPart = pathParts[pathParts.length - 1];
-          const name = path.basename(lastPathPart, path.extname(lastPathPart));
-
-          IMAGE_NAMES.includes(name) &&
-            add({
-              id: hash(filePath),
-              type: 'image',
-              name: name,
-              parent: hash(path.dirname(filePath)),
-              path: filePath,
-            });
-        }
-
-        if (
-          (pathParts.length === 3 || pathParts.length === 2) &&
-          path.basename(filePath) === 'mbid'
-        ) {
-          add({
-            id: hash(filePath),
-            type: 'mbid',
-            name: 'mbid',
-            parent: hash(path.dirname(filePath)),
-            path: filePath,
-          });
-        }
-      })
+      .on('add', onAddChange)
+      .on('change', onAddChange)
       .on('unlink', (filePath) => {
         remove(hash(filePath), hash(path.dirname(filePath)));
       })
@@ -342,7 +355,15 @@ export async function init(dir: string) {
         queue(cleanImages);
         queue(cleanMeta);
         console.log('Initial library scan complete.');
-        resolve(library);
+
+        if (q.length) {
+          console.log('Waiting for initial queue to complete');
+          q.on('end', () => {
+            resolve(true);
+          });
+        } else {
+          resolve(true);
+        }
       })
       // Handle change event?
       .on('error', reject);

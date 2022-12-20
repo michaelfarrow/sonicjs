@@ -2,7 +2,7 @@ import { default as queueLib } from 'queue';
 
 const CONCURRENCY = 1;
 
-const q = queueLib({ concurrency: CONCURRENCY, autostart: true });
+export const q = queueLib({ concurrency: CONCURRENCY, autostart: true });
 
 export function queue(f: () => Promise<any>) {
   // console.log('Pushing job to queue');
