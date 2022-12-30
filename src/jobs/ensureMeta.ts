@@ -51,9 +51,10 @@ export default function ensureMeta(item: LibraryItem) {
     const album = item.parent ? await AlbumRepository.getById(parentId) : null;
 
     if (
-      (!artist && !album) ||
+      !artist &&
+      !album /* ||
       (artist && artist.metaFetched) ||
-      (album && album.metaFetched)
+      (album && album.metaFetched) */
     ) {
       return false;
     }
@@ -64,6 +65,7 @@ export default function ensureMeta(item: LibraryItem) {
       const info = await mbApi.lookupArtist(mbid);
       const bio = await getBiography(mbid);
 
+      artist.mbid = mbid;
       artist.name = info.name;
       artist.bio = bio || null;
       artist.metaFetched = true;

@@ -46,6 +46,12 @@ export class Artist extends BaseEntity {
   bio!: string | null;
 
   @Column({
+    type: String,
+    nullable: true,
+  })
+  mbid!: string | null;
+
+  @Column({
     type: Date,
     nullable: true,
   })

@@ -45,6 +45,7 @@ export default genericHandler(
     const response: GetArtistInfo2Response = {
       artistInfo2: {
         biography: artist.bio || undefined,
+        musicBrainzId: artist.mbid || undefined,
         similarArtist: genreArtists.map((artist) => artistResponse(artist)),
       },
     };
