@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import xml from 'xml';
 import _ from 'lodash';
+import log from '@/logger';
 
 type Node =
   | {
@@ -22,7 +23,11 @@ function getXmlNodeInfo(o: any) {
           ...getXmlNodeInfo(v),
         });
       });
-    } else if (typeof val === 'object' && !(val instanceof Date)) {
+    } else if (
+      typeof val === 'object' &&
+      !(val instanceof Date) &&
+      val !== null
+    ) {
       children.push({
         type: key,
         ...getXmlNodeInfo(val),
@@ -74,6 +79,10 @@ export default function successMiddleware(req: Request, res: Response): void {
       xmlns: isJson ? undefined : 'http://subsonic.org/restapi',
     },
   };
+
+  if (data.error) {
+    log('ERROR', data.error.message);
+  }
 
   if (isJson) {
     res.json(response);

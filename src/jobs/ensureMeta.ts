@@ -1,46 +1,106 @@
 import fs from 'fs-extra';
-import { metaPath } from '../utils/path';
-import {
-  LibraryItem,
-  MetadataArtist,
-  MetadataAlbum,
-  getItem,
-  cacheMetadata,
-} from '../library';
-import mbApi from '../utils/mbApi';
+import axios from 'axios';
+import log from '@/logger';
+import { hash } from '@/utils/hash';
+import { libraryPath, libraryPathRel } from '@/utils/path';
+import mbApi from '@/utils/mbApi';
+import { LibraryItem } from '@/library';
+import { ArtistRepository, AlbumRepository } from '@/db';
+import Genre from '@/models/Genre';
+
+const AUDIO_DB_KEY = '195003';
+
+const JSON_OPTIONS = {
+  headers: {
+    'Content-Type': 'application/json; charset=shift-jis',
+    'Access-Control-Allow-Origin': '*',
+    'accept-encoding': null,
+    proxy: false,
+    responseType: 'arraybuffer',
+    responseEncoding: 'binary',
+    gzip: true,
+    encoding: null,
+  },
+};
+
+function getBiography(mbid: string): Promise<string | undefined> {
+  return new Promise((resolve, reject) => {
+    axios
+      .get(
+        `https://www.theaudiodb.com/api/v1/json/${AUDIO_DB_KEY}/artist-mb.php?i=${encodeURIComponent(
+          mbid
+        )}`,
+        JSON_OPTIONS
+      )
+      .then((res) => {
+        resolve(res.data?.artists?.[0]?.strBiographyEN);
+      })
+      .catch(reject);
+  });
+}
 
 export default function ensureMeta(item: LibraryItem) {
   return async () => {
-    const parent = item.parent && getItem(item.parent);
+    log('ensuring meta', libraryPathRel(item.path));
 
-    if (parent && ['album', 'artist'].includes(parent.type)) {
-      const metaP = metaPath(parent.id);
-      if (!(await fs.pathExists(metaP))) {
-        const id = await fs.readFile(item.path, 'utf-8');
-        if (id) {
-          console.log('Looking up metadata', parent.name);
-          switch (parent.type) {
-            case 'artist':
-              const infoArtist = await mbApi.lookupArtist(id);
-              const metaArtist: MetadataArtist = {
-                name: infoArtist.name,
-              };
-              await fs.outputJSON(metaP, metaArtist);
-              cacheMetadata(item, metaArtist);
-              break;
-            case 'album':
-              const infoRelease = await mbApi.lookupRelease(id);
-              const metaAlbum: MetadataAlbum = {
-                title: infoRelease.title,
-              };
-              await fs.outputJSON(metaP, metaAlbum, {});
-              cacheMetadata(item, metaAlbum);
-              break;
-          }
-        }
-      } else {
-        cacheMetadata(item, await fs.readJson(metaP));
+    const parentId = hash(libraryPathRel(item.parent));
+
+    const artist = item.parent
+      ? await ArtistRepository.getById(parentId)
+      : null;
+    const album = item.parent ? await AlbumRepository.getById(parentId) : null;
+
+    if (
+      (!artist && !album) ||
+      (artist && artist.metaFetched) ||
+      (album && album.metaFetched)
+    ) {
+      return false;
+    }
+
+    const mbid = await fs.readFile(libraryPath(item.path), 'utf-8');
+
+    if (artist) {
+      const info = await mbApi.lookupArtist(mbid);
+      const bio = await getBiography(mbid);
+
+      artist.name = info.name;
+      artist.bio = bio || null;
+      artist.metaFetched = true;
+
+      await artist.save();
+    }
+
+    if (album) {
+      const info = await mbApi.lookupRelease(mbid, ['release-groups']);
+      const year = info['release-events']?.[0]?.date?.match(/\d+/)?.[0];
+      const releaseGroup = info['release-group']?.id;
+
+      const releaseGroupInfo = releaseGroup
+        ? await mbApi.lookupReleaseGroup(releaseGroup, ['genres'])
+        : null;
+
+      const genres: Genre[] = (
+        releaseGroupInfo
+          ? (releaseGroupInfo as any).genres.map((genre: any) => genre.name)
+          : []
+      ).map((genre: string) => {
+        const g = new Genre();
+        g.id = hash(genre);
+        g.name = genre;
+        return g;
+      });
+
+      for (const genre of genres) {
+        await genre.save();
       }
+
+      album.name = info.title;
+      album.year = (year && Number(year)) || null;
+      album.genres = genres;
+      album.metaFetched = true;
+
+      await album.save();
     }
 
     return true;

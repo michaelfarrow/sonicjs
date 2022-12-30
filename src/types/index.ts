@@ -8,3 +8,5 @@ export { default as Starred2 } from './Starred2';
 export { default as Child } from './Child';
 export { default as Genre } from './Genre';
 export { default as MediaType } from './MediaType';
+export { default as ArtistInfoBase } from './ArtistInfoBase';
+export { default as ArtistInfo2 } from './ArtistInfo2';

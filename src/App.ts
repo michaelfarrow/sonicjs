@@ -7,12 +7,10 @@ import api from './api';
 class App {
   public express: Express;
   public api: Router;
-  public rootPath: string;
 
-  constructor(rootPath: string) {
+  constructor() {
     this.express = express();
     this.api = api;
-    this.rootPath = rootPath;
 
     this.mountMiddleware();
     this.mountRoutes();
@@ -29,8 +27,6 @@ class App {
 
     this.express.use('/', router);
     this.express.use('/rest', this.api);
-
-    this.express.use('/lib', express.static(this.rootPath));
   }
 
   private mountMiddleware(): void {
@@ -39,6 +35,6 @@ class App {
   }
 }
 
-export default function app(root: string) {
-  return new App(root).express;
+export default function app() {
+  return new App().express;
 }

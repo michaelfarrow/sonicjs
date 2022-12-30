@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import klaw from 'klaw';
 import path from 'path';
-import { hasItem } from '../library';
+// import { hasItem } from '../library';
 import { IMAGE_DIR } from '../config';
 
 function getDirs(): Promise<string[]> {
@@ -19,12 +19,12 @@ function getDirs(): Promise<string[]> {
 }
 
 const cleanImages = async () => {
-  const dirs = await getDirs();
+  // const dirs = await getDirs();
 
-  for (const dir of dirs) {
-    const id = path.basename(dir);
-    if (!hasItem(id)) await fs.remove(dir);
-  }
+  // for (const dir of dirs) {
+  //   const id = path.basename(dir);
+  //   if (!hasItem(id)) await fs.remove(dir);
+  // }
 
   return true;
 };

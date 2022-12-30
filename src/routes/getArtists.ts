@@ -1,8 +1,10 @@
-import { NextFunction, Request, Response } from 'express';
-import { ArtistID3 } from '../types';
-import { allArtists } from '../library';
-
-import { artistResponse } from '../api-response';
+import { Request, Response, NextFunction } from 'express';
+import _ from 'lodash';
+import { IGNORED_ARTICLES } from '@/config';
+import { ignoredArticlesRegex } from '@/utils/library';
+import { ArtistID3 } from '@/types';
+import { ArtistRepository } from '@/db';
+import { artistResponse } from '@/api-response';
 
 export type GetArtistsResponse = {
   artists: {
@@ -14,28 +16,38 @@ export type GetArtistsResponse = {
   };
 };
 
-export default async function getArtists(
+export default async function (
   req: Request,
   res: Response,
   next: NextFunction
 ) {
-  const libArtists = await allArtists();
-  const artists: ArtistID3[] = [];
+  const artists = await ArtistRepository.getAll()
+    .include((a) => a.image)
+    .include((a) => a.albums)
+    .orderBy((a) => a.sortName);
 
-  for (const artist of libArtists) {
-    artists.push(await artistResponse(artist));
-  }
+  const indexedArtists = artists.reduce<{
+    [key: string]: { group: string; artists: typeof artists };
+  }>((index, artist) => {
+    const group = artist.sortName
+      .toUpperCase()
+      .replace(ignoredArticlesRegex, '')[0];
+
+    if (!index[group]) index[group] = { group, artists: [] };
+    index[group].artists.push(artist);
+
+    return index;
+  }, {});
 
   const response: GetArtistsResponse = {
     artists: {
-      ignoredArticles: 'The El La Los Las Le Les',
-      index: [
-        // TODO: Alpha index
-        {
-          name: 'All',
-          artist: artists,
-        },
-      ],
+      ignoredArticles: IGNORED_ARTICLES.join(' '),
+      index: _.sortBy(Object.values(indexedArtists), 'group').map(
+        (indexedArtist) => ({
+          name: indexedArtist.group,
+          artist: indexedArtist.artists.map(artistResponse),
+        })
+      ),
     },
   };
 

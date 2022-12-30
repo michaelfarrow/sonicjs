@@ -1,33 +1,35 @@
 import { parseFile } from 'music-metadata';
 import _ from 'lodash';
-import fs from 'fs-extra';
-import { LibraryItem, MetadataTrack, cacheMetadata } from '../library';
-import { metaPath } from '../utils/path';
+import { hash } from '@/utils/hash';
+import { libraryPathRel } from '@/utils/path';
+import { libraryPath } from '@/utils/path';
+import { LibraryItem } from '@/library';
+import { TrackRepository } from '@/db';
 
 const splitArtists = (artists: string) => artists.split(/\s*;\s*/g);
 const splitGenres = (genres: string) => genres.split(/\s*,\s*/g);
 
-export default function ensureTrackMeta(track: LibraryItem) {
+export default function ensureTrackMeta(item: LibraryItem) {
   return async () => {
-    const metaP = metaPath(track.id);
-    if (!(await fs.pathExists(metaP))) {
-      console.log('Looking up track metadata', track.name);
-      const meta = await parseFile(track.path);
-      const _meta: MetadataTrack = {
-        title: meta.common.title || '',
-        artist: splitArtists(meta.common.artist || ''),
-        albumArtist: splitArtists(meta.common.albumartist || ''),
-        genre: _.flatten((meta.common.genre || []).map(splitGenres)),
-        duration: meta.format.duration || 0,
-        bitRate: meta.format.bitrate || 0,
-        track: meta.common.track.no || 0,
-        disc: meta.common.disk.no || undefined,
-      };
-      await fs.outputJSON(metaP, _meta);
-      cacheMetadata(track, _meta);
-    } else {
-      cacheMetadata(track, await fs.readJSON(metaP));
+    const track = await TrackRepository.getById(
+      hash(libraryPathRel(item.path))
+    );
+
+    if (track && !track.metaFetched) {
+      const meta = await parseFile(libraryPath(track.path));
+
+      track.name = meta.common.title || null;
+      track.artist = meta.common.artist || null;
+      track.albumArtist = meta.common.albumartist || null;
+      track.bitRate =
+        (meta.format.bitrate && Math.round(meta.format.bitrate / 1000)) || null;
+      track.track = meta.common.track.no || null;
+      track.disc = meta.common.disk.no || null;
+      track.duration =
+        (meta.format.duration && Math.round(meta.format.duration)) || null;
+      track.metaFetched = true;
+
+      await track.save();
     }
-    return true;
   };
 }

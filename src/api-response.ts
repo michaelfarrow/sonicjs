@@ -4,125 +4,78 @@ import {
   ArtistID3,
   ArtistWithAlbumsID3,
   Child,
-} from './types';
-import {
-  LibraryItemAlbum,
-  artist,
-  album,
-  albums,
-  tracks,
-  images,
-  LibraryItemArtist,
-  LibraryItemTrack,
-} from './library';
+} from '@/types';
+import Artist from '@/models/Artist';
+import Album from '@/models/Album';
+import Track from '@/models/Track';
 
-export async function trackResponse(
-  libItem: LibraryItemTrack,
-  libAlbum?: LibraryItemAlbum | null,
-  libArtist?: LibraryItemArtist | null
-): Promise<Child> {
-  const songAlbum = libAlbum || (await album(libItem.parent || ''));
-  const songArtist = libArtist || (await artist(songAlbum?.parent || ''));
-  const albumImages = songAlbum ? images(songAlbum) : [];
-
-  const albumCover =
-    (albumImages.find((image) => ['cover'].includes(image.name))?.path &&
-      songAlbum?.id) ||
-    undefined;
+export function trackResponse(track: Track, album: Album = track.album): Child {
+  const multiArtist =
+    !!track.artist && !!track.albumArtist && track.artist !== track.albumArtist;
 
   return {
-    id: libItem.id,
-    title: libItem.meta?.title || libItem.name,
-    artist: songArtist?.meta?.name || songArtist?.name || undefined,
-    artistId: songArtist?.id || undefined,
-    album: songAlbum?.meta?.title || songAlbum?.name || undefined,
-    albumId: songAlbum?.id || undefined,
-    duration: Math.round(libItem.meta?.duration || 0),
-    bitRate: Math.round((libItem.meta?.bitRate || 0) / 1000),
-    // contentType: 'audio/mp4',
+    id: track.id,
+    title: track.name || track.item,
+    artist: multiArtist
+      ? (track.artist as string)
+      : album.artist.name || album.artist.item,
+    artistId: !multiArtist ? album.artist.id : undefined,
+    path: track.path,
+    album: album?.name || album?.item,
+    albumId: album.id,
+    duration: track.duration || undefined,
+    bitRate: track.bitRate || undefined,
+    contentType: track.type || undefined,
     // type: 'music',
-    path: libItem.path,
-    track: libItem.meta?.track || undefined,
-    discNumber: libItem.meta?.disc || undefined,
-    coverArt: albumCover,
+    discNumber: track.disc || undefined,
+    track: track.track || undefined,
+    userRating: track.rating,
+    starred: track.starred || undefined,
+    coverArt: album.image ? `${album.image.id}|${album.image.hash}` : undefined,
+    created: track.createdAt,
   };
 }
 
-export async function albumResponse(
-  libItem: LibraryItemAlbum,
-  libArtist?: LibraryItemArtist | null,
-  libTracks?: LibraryItemTrack[] | null
-): Promise<AlbumID3> {
-  const albumArtist = libArtist || (await artist(libItem.parent || ''));
-  const albumTracks = libTracks || (await tracks(libItem));
-  const albumImages = images(libItem);
-
-  const albumCover =
-    (albumImages.find((image) => ['cover'].includes(image.name))?.path &&
-      libItem.id) ||
-    undefined;
-
-  let duration = 0;
-
-  for (const track of albumTracks) {
-    duration += track.meta?.duration || 0;
-  }
-
+export function albumResponse(
+  album: Album,
+  artist: Artist = album.artist
+): AlbumID3 {
   return {
-    id: libItem.id,
-    name: libItem.meta?.title || libItem.name,
-    artist: albumArtist?.meta?.name || albumArtist?.name,
-    artistId: albumArtist?.id,
-    coverArt: albumCover,
-    songCount: albumTracks.length,
-    duration: Math.round(duration),
-    created: new Date(),
+    id: album.id,
+    name: album.name || album.item,
+    artist: artist.name || artist.item,
+    artistId: artist.id,
+    coverArt: album.image ? `${album.image.id}|${album.image.hash}` : undefined,
+    songCount: album.trackCount,
+    duration: album.duration,
+    year: album.year || undefined,
+    starred: album.starred || undefined,
+    created: album.createdAt,
   };
 }
 
-export async function albumWithSongsResponse(
-  libItem: LibraryItemAlbum
-): Promise<AlbumWithSongsID3> {
-  const albumTracks = await tracks(libItem);
-  const albumArtist = await artist(libItem.parent || '');
-  const album = await albumResponse(libItem, albumArtist, albumTracks);
-  const resSongs: Child[] = [];
-
-  for (const track of albumTracks) {
-    resSongs.push(await trackResponse(track, libItem, albumArtist));
-  }
-
-  return { ...album, song: resSongs };
-}
-
-export async function artistResponse(
-  libItem: LibraryItemArtist
-): Promise<ArtistID3> {
-  const artistImages = images(libItem);
-  const artistAlbums = await albums(libItem);
+export function albumWithSongsResponse(album: Album): AlbumWithSongsID3 {
   return {
-    id: libItem.id,
-    name: libItem.meta?.name || libItem.name,
-    albumCount: artistAlbums.length,
-    coverArt:
-      (artistImages.find((image) => ['poster', 'cover'].includes(image.name))
-        ?.path &&
-        libItem.id) ||
-      undefined,
+    ...albumResponse(album),
+    song: album.tracks.map((track) => trackResponse(track, album)),
   };
 }
 
-export async function artistWithAlbumsResponse(
-  libItem: LibraryItemArtist
-): Promise<ArtistWithAlbumsID3> {
-  const artist = await artistResponse(libItem);
-  const artistAlbums = await albums(libItem);
+export function artistResponse(artist: Artist): ArtistID3 {
+  return {
+    id: artist.id,
+    name: artist.name || artist.item,
+    albumCount: artist.albumCount,
+    coverArt: artist.image
+      ? `${artist.image.id}|${artist.image.hash}`
+      : undefined,
+    starred: artist.starred || undefined,
+  };
+}
 
-  const resAlbums: AlbumID3[] = [];
-
-  for (const album of artistAlbums) {
-    resAlbums.push(await albumResponse(album));
-  }
-
-  return { ...artist, album: resAlbums };
+export function artistWithAlbumsResponse(artist: Artist): ArtistWithAlbumsID3 {
+  return {
+    ...artistResponse(artist),
+    album: artist.albums.map((album) => albumResponse(album, artist)),
+  };
 }

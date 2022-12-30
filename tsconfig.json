@@ -4,10 +4,24 @@
     "target": "es6",
     "module": "commonjs",
     "outDir": "dist",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
     "sourceMap": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "files": ["./node_modules/@types/node/index.d.ts"],
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "src-old/api-response.old.ts",
+    "src-old/api-response.old.ts",
+    "src-old/db.old.ts",
+    "src-old/db.old.ts",
+    "src-old/getAlbumList2.old.ts"
+  ],
   "exclude": ["node_modules"]
 }

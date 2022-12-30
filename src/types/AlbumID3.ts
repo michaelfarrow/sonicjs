@@ -7,7 +7,7 @@ type AlbumID3 = {
   songCount: number;
   duration: number;
   created: Date;
-  starred?: Boolean;
+  starred?: Date;
   year?: number;
   genre?: string;
 };

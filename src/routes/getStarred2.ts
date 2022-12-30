@@ -1,16 +1,52 @@
-import { NextFunction, Request, Response } from 'express';
-import { Starred2 } from '../types';
+import { Request, Response, NextFunction } from 'express';
+import { BaseEntity } from 'typeorm';
+import { LinqRepository } from 'typeorm-linq-repository';
+import { Starred2 } from '@/types';
+import { ArtistRepository, AlbumRepository, TrackRepository } from '@/db';
+import { albumResponse, artistResponse, trackResponse } from '@/api-response';
+import Artist from '@/models/Artist';
+import Album from '@/models/Album';
+import Track from '@/models/Track';
 
 export type GetStarred2Response = {
   starred2: Starred2;
 };
 
-export default async function getStarred2(
+function getStarred<T extends Artist | Album | Track>(repo: LinqRepository<T>) {
+  return repo
+    .getAll()
+    .where((a) => a.starred!)
+    .isNotNull()
+    .orderBy((a) => a.starred);
+}
+
+export default async function (
   req: Request,
   res: Response,
   next: NextFunction
 ) {
-  const response: GetStarred2Response = { starred2: {} };
+  const albums = await getStarred(AlbumRepository)
+    .include((a) => a.artist)
+    .include((a) => a.image)
+    .include((a) => a.tracks);
+
+  const artists = await getStarred(ArtistRepository)
+    .include((a) => a.image)
+    .include((a) => a.albums);
+
+  const tracks = await getStarred(TrackRepository)
+    .include((a) => a.album)
+    .thenInclude((album) => album.artist)
+    .include((a) => a.album)
+    .thenInclude((album) => album.image!);
+
+  const response: GetStarred2Response = {
+    starred2: {
+      album: albums.map((album) => albumResponse(album)),
+      artist: artists.map((artist) => artistResponse(artist)),
+      song: tracks.map((track) => trackResponse(track)),
+    },
+  };
 
   res.locals = response;
   next();

@@ -1,15 +1,20 @@
-import app from './App';
-import { init } from './library';
+import app from '@/App';
+import log from '@/logger';
+import { initLibrary } from '@/library';
+import { initDb } from '@/db';
+import { initCron } from '@/cron-jobs';
 
 const port = process.env.PORT || 3000;
-const root = '/Users/mike.farrow/music-lib';
 
-init(root).then((res) => {
-  app(root)
-    .listen(port, () => {
-      return console.log(`server is listening on ${port}`);
-    })
-    .on('error', (err) => {
-      return console.log(err);
-    });
+initDb().then(() => {
+  initLibrary().then(() => {
+    initCron();
+    app()
+      .listen(port, () => {
+        return console.log(`server is listening on ${port}`);
+      })
+      .on('error', (err) => {
+        return log(err);
+      });
+  });
 });

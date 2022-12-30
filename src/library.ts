@@ -1,272 +1,80 @@
 import path from 'path';
 import chokidar from 'chokidar';
 import fs from 'fs-extra';
-import { queue, q } from './queue';
-import { CACHE_DIR } from './config';
-import { metaPath } from './utils/path';
-import { hash } from './utils/hash';
-import cleanImages from './jobs/cleanImages';
-import removeImage from './jobs/removeImage';
-import cleanMeta from './jobs/cleanMeta';
-import ensureMeta from './jobs/ensureMeta';
-import removeMeta from './jobs/removeMeta';
-import ensureTrackMeta from './jobs/ensureTrackMeta';
+import jobsQueue from '@/jobs';
+import scanQueue from '@/scanner';
+import { CACHE_DIR, LIBRARY_PATH } from '@/config';
+import cleanImages from '@/jobs/cleanImages';
+import cleanMeta from '@/jobs/cleanMeta';
+import ensureArtist from './jobs/ensureArtist';
+import ensureAlbum from './jobs/ensureAlbum';
+import ensureTrack from './jobs/ensureTrack';
+import ensureMeta from '@/jobs/ensureMeta';
+import ensureTrackMeta from '@/jobs/ensureTrackMeta';
+import ensureImage from '@/jobs/ensureImage';
+import removeItem from '@/jobs/removeItem';
 
 const MUSIC_TYPES = ['m4a', 'mp3'];
 const IMAGE_TYPES = ['jpg', 'jpeg', 'png', 'webp'];
-const IMAGE_NAMES = ['cover', 'poster', 'backdrop'];
-
-export type MetadataArtist = {
-  name: string;
-};
-
-export type MetadataAlbum = {
-  title: string;
-};
-
-export type MetadataTrack = {
-  title: string;
-  genre: string[];
-  artist: string[];
-  albumArtist: string[];
-  duration: number;
-  bitRate: number;
-  track: number;
-  disc?: number;
-};
+const IMAGE_NAMES = ['cover', 'poster'];
 
 export type LibraryItem = {
-  id: string;
   type: LibraryItemType;
-  parent?: string;
+  parent: string;
   name: string;
   path: string;
-  children?: string[];
 };
 
-export type LibraryItemWithMeta<MetaType> = LibraryItem & {
-  meta?: MetaType;
-};
-
-export type LibraryItemArtist = LibraryItemWithMeta<MetadataArtist>;
-export type LibraryItemAlbum = LibraryItemWithMeta<MetadataAlbum>;
-export type LibraryItemTrack = LibraryItemWithMeta<MetadataTrack>;
-
-export type LibraryItemTypes = {
-  artist: LibraryItemArtist;
-  album: LibraryItemAlbum;
-  track: LibraryItemTrack;
-  image: LibraryItem;
-  mbid: LibraryItem;
-};
-
-export type LibraryItemType = keyof LibraryItemTypes;
-
-const library: { [id: string]: LibraryItem } = {};
-let metadataCache: { [id: string]: any } = {};
+export type LibraryItemType = 'artist' | 'album' | 'track' | 'image' | 'mbid';
 
 function isType(p: string, types: string[]) {
   return types.map((t) => `.${t}`).includes(path.extname(p));
 }
 
-export function hasItem(id: string): Boolean {
-  return !!library[id];
-}
-
-export function getItem(id: string): LibraryItem | null {
-  return library[id] || null;
-}
-
-export function getItemType<T extends keyof LibraryItemTypes>(
-  id: string,
-  type: T
-): LibraryItemTypes[T] | null {
-  const libraryItem = library[id];
-  if (libraryItem && libraryItem.type === type)
-    return libraryItem as LibraryItemTypes[T];
-  return null;
-}
-
-function add(newItem: LibraryItem) {
-  remove(newItem.id);
-
-  const parent = newItem.parent ? getItem(newItem.parent) : null;
-
-  if (!hasItem(newItem.id)) {
-    console.log(`Adding ${newItem.type} to library`, newItem.path);
-  } else {
-    console.log(`Updating ${newItem.type} in library`, newItem.path);
-  }
-
-  library[newItem.id] = { ...newItem, path: newItem.path };
-
-  if (parent) {
-    if (!parent.children) parent.children = [];
-    if (!parent.children.includes(newItem.id)) parent.children.push(newItem.id);
-  }
-
-  switch (newItem.type) {
+async function add(item: LibraryItem) {
+  switch (item.type) {
+    case 'artist':
+      jobsQueue.push(ensureArtist(item));
+      break;
+    case 'album':
+      jobsQueue.push(ensureAlbum(item));
+      break;
     case 'track':
-      queue(ensureTrackMeta(newItem));
+      jobsQueue.push(ensureTrack(item));
+      scanQueue.push(ensureTrackMeta(item));
       break;
     case 'mbid':
-      queue(ensureMeta(newItem));
+      scanQueue.push(ensureMeta(item));
+      break;
+    case 'image':
+      jobsQueue.push(ensureImage(item));
       break;
   }
 }
 
-function remove(id: string, parentId?: string) {
-  const item = getItem(id);
-  const parent = parentId ? getItem(parentId) : null;
-
-  if (item) {
-    if (item.type === 'mbid' && parent) {
-      queue(removeMeta(parent.id));
-    }
-
-    if (item.type === 'image') {
-      queue(removeImage(item.id));
-    }
-
-    queue(removeMeta(item.id));
-
-    console.log(`Removing ${id} from library`);
-    delete library[id];
-  }
-
-  if (parent && parent.children) {
-    parent.children = parent.children.filter((c) => c !== id);
-  }
-
-  removeMetadata(id);
+function remove(p: string) {
+  jobsQueue.push(removeItem(p));
 }
 
-export function items() {
-  return Object.values(library);
-}
-
-export function item(id: string): LibraryItem | null {
-  return library[id] || null;
-}
-
-export async function artist(id: string) {
-  const item = getItemType(id, 'artist');
-  return item && attachMetadata(item);
-}
-
-export async function album(id: string) {
-  const item = getItemType(id, 'album');
-  return item && attachMetadata(item);
-}
-
-export async function track(id: string) {
-  const item = getItemType(id, 'track');
-  return item && attachMetadata(item);
-}
-
-export async function image(id: string) {
-  const item = getItemType(id, 'image');
-  return item && attachMetadata(item);
-}
-
-export function filteredItems<T extends keyof LibraryItemTypes>(
-  type: T
-): LibraryItemTypes[T][] {
-  return items().filter((i) => i.type === type);
-}
-
-export async function allAlbums() {
-  return await attachMetadataMultiple(filteredItems('album'));
-}
-
-export async function allArtists() {
-  return await attachMetadataMultiple(filteredItems('artist'));
-}
-
-export function allMbid() {
-  return filteredItems('mbid');
-}
-
-export function children(parent: LibraryItem): LibraryItem[] {
-  return (parent.children || [])
-    .filter((c) => !!library[c])
-    .map((c) => ({ ...library[c] }));
-}
-
-export function filteredChildren(parent: LibraryItem, type: LibraryItemType) {
-  return children(parent).filter((c) => c.type === type);
-}
-
-export async function albums(parent: LibraryItem) {
-  return await attachMetadataMultiple(
-    filteredChildren(parent, 'album') as LibraryItemAlbum[]
-  );
-}
-
-export async function tracks(parent: LibraryItem) {
-  return await attachMetadataMultiple(
-    filteredChildren(parent, 'track') as LibraryItemTrack[]
-  );
-}
-
-export function images(parent: LibraryItem) {
-  return filteredChildren(parent, 'image');
-}
-
-export function clearMetadataCache() {
-  // metadataCache = {};
-}
-
-export function cacheMetadata(libItem: LibraryItem, meta: any) {
-  metadataCache[libItem.id] = meta;
-}
-
-export function removeMetadata(id: string) {
-  if (metadataCache[id]) delete metadataCache[id];
-}
-
-export async function attachMetadata<T extends LibraryItemWithMeta<any>>(
-  item: T
-) {
-  const metaP = metaPath(item.id);
-  if (metadataCache[item.id]) {
-    // console.log('getting meta from cache', item.type, item.id);
-    return { ...item, meta: metadataCache[item.id] };
-  } else if (await fs.pathExists(metaP)) {
-    // console.log('gtting meta from file', item.type, item.id);
-    const metaData = await fs.readJSON(metaP);
-    metadataCache[item.id] = metaData;
-    return { ...item, meta: metaData };
-  }
-  return { ...item };
-}
-
-export async function attachMetadataMultiple<
-  T extends LibraryItemWithMeta<any>
->(items: T[]) {
-  const resItems: T[] = [];
-  for (const item of items) {
-    resItems.push(await attachMetadata(item));
-  }
-  return resItems;
-}
-
-export async function init(dir: string) {
+export async function initLibrary() {
   await fs.ensureDir(CACHE_DIR);
 
-  const watchDir = path.resolve(dir);
+  const watchDir = path.resolve(LIBRARY_PATH);
+
+  const relPath = (p: string) => {
+    return p.substring(watchDir.length + 1);
+  };
 
   const onAddChange = (filePath: string) => {
-    const relativePath = filePath.substring(watchDir.length + 1);
+    const parentDir = path.dirname(filePath);
+    const relativePath = relPath(filePath);
     const pathParts = relativePath.split(/\//);
-    const id = hash(filePath);
 
     if (pathParts.length === 3 && isType(filePath, MUSIC_TYPES)) {
       add({
-        id,
         type: 'track',
         name: path.basename(pathParts[2], path.extname(pathParts[2])),
-        parent: hash(path.dirname(filePath)),
+        parent: parentDir,
         path: filePath,
       });
     }
@@ -280,10 +88,9 @@ export async function init(dir: string) {
 
       if (IMAGE_NAMES.includes(name)) {
         add({
-          id,
           type: 'image',
           name: name,
-          parent: hash(path.dirname(filePath)),
+          parent: parentDir,
           path: filePath,
         });
       }
@@ -294,10 +101,9 @@ export async function init(dir: string) {
       path.basename(filePath) === 'mbid'
     ) {
       add({
-        id,
         type: 'mbid',
         name: 'mbid',
-        parent: hash(path.dirname(filePath)),
+        parent: parentDir,
         path: filePath,
       });
     }
@@ -305,60 +111,47 @@ export async function init(dir: string) {
 
   return new Promise((resolve, reject) => {
     chokidar
-      .watch(watchDir, { depth: 2 })
+      .watch(watchDir, {
+        depth: 2,
+        ignored: /\/db\..*?$/,
+      })
       .on('addDir', (dirPath) => {
         if (dirPath === watchDir) return;
 
-        const id = hash(dirPath);
-        const relativePath = dirPath.substring(watchDir.length + 1);
+        const parentDir = path.dirname(dirPath);
+        const relativePath = relPath(dirPath);
         const pathParts = relativePath.split(/\//);
 
         if (pathParts.length === 1) {
           // Artist
           add({
-            id,
             type: 'artist',
             name: pathParts[0],
             path: dirPath,
+            parent: '',
           });
         } else if (pathParts.length === 2) {
           // Album
           add({
-            id,
             type: 'album',
-            parent: hash(path.dirname(dirPath)),
+            parent: parentDir,
             name: pathParts[1],
             path: dirPath,
           });
         }
       })
-      .on('unlinkDir', (dirPath) => {
-        if (dirPath === watchDir) return;
-
-        const relativePath = dirPath.substring(watchDir.length + 1);
-        const pathParts = relativePath.split(/\//);
-
-        const id = hash(dirPath);
-
-        if (pathParts.length === 1) {
-          remove(id);
-        } else if (pathParts.length > 1) {
-          remove(id, hash(path.dirname(dirPath)));
-        }
-      })
       .on('add', onAddChange)
       .on('change', onAddChange)
-      .on('unlink', (filePath) => {
-        remove(hash(filePath), hash(path.dirname(filePath)));
-      })
+      .on('unlinkDir', remove)
+      .on('unlink', remove)
       .on('ready', async () => {
-        queue(cleanImages);
-        queue(cleanMeta);
-        console.log('Initial library scan complete.');
+        // queue(cleanImages);
+        // queue(cleanMeta);
+        console.log('initial library scan complete.');
 
-        if (q.length) {
-          console.log('Waiting for initial queue to complete');
-          q.on('end', () => {
+        if (jobsQueue.length) {
+          console.log('waiting for initial queue to complete');
+          jobsQueue.on('end', () => {
             resolve(true);
           });
         } else {
@@ -367,5 +160,8 @@ export async function init(dir: string) {
       })
       // Handle change event?
       .on('error', reject);
+  }).then(() => {
+    console.log('starting meta scan');
+    scanQueue.start();
   });
 }

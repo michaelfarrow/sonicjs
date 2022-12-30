@@ -3,7 +3,7 @@ type ArtistID3 = {
   name: string;
   coverArt?: string;
   albumCount: number;
-  starred?: Boolean;
+  starred?: Date;
 };
 
 export default ArtistID3;

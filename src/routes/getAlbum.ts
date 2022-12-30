@@ -1,34 +1,38 @@
-import { NextFunction, Request, Response } from 'express';
-import { AlbumWithSongsID3 } from '../types';
-import { album } from '../library';
-import { albumWithSongsResponse } from '../api-response';
-import { Error } from '../error';
+import { AlbumWithSongsID3 } from '@/types';
+import { AlbumRepository } from '@/db';
+import { albumWithSongsResponse } from '@/api-response';
+import { Error } from '@/error';
+import genericHandler from './generic';
 
 export type GetAlbumResponse = {
   album: AlbumWithSongsID3;
 };
 
-export default async function getArtist(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  const { id } = req.query;
-  const _id = (id || '') as string;
+export default genericHandler(
+  (z) => ({
+    id: z.string().uuid(),
+  }),
+  async ({ id }, next, res) => {
+    const album = await AlbumRepository.getById(id)
+      .include((a) => a.artist)
+      .include((a) => a.image)
+      .include((a) => a.tracks)
+      .orderBy((track) => track.disc)
+      .thenBy((track) => track.track)
+      .thenBy((track) => track.name);
 
-  const libAlbum = await album(_id);
+    if (!album) {
+      return next({
+        code: Error.NotFound,
+        message: 'Album not found',
+      });
+    }
 
-  if (!libAlbum) {
-    return next({
-      code: Error.NotFound,
-      message: 'Album not found',
-    });
+    const response: GetAlbumResponse = {
+      album: albumWithSongsResponse(album),
+    };
+
+    res.locals = response;
+    next();
   }
-
-  const response: GetAlbumResponse = {
-    album: await albumWithSongsResponse(libAlbum),
-  };
-
-  res.locals = response;
-  next();
-}
+);

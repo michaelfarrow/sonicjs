@@ -23,7 +23,7 @@ type Child = {
   averageRating?: number;
   discNumber?: number;
   created?: Date;
-  starred?: number;
+  starred?: Date;
   albumId?: string;
   artistId?: string;
   type?: MediaType;
