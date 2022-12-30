@@ -4,7 +4,7 @@ const CONCURRENCY = 1;
 
 const jobsQueue = queue({
   concurrency: CONCURRENCY,
-  autostart: true,
+  autostart: false,
 });
 
 // q.on('success', (res, job) => {

@@ -150,18 +150,17 @@ export async function initLibrary() {
         console.log('initial library scan complete.');
 
         if (jobsQueue.length) {
-          console.log('waiting for initial queue to complete');
+          jobsQueue.start();
           jobsQueue.on('end', () => {
-            resolve(true);
+            scanQueue.start();
           });
         } else {
-          resolve(true);
+          jobsQueue.start();
+          scanQueue.start();
         }
+        resolve(true);
       })
       // Handle change event?
       .on('error', reject);
-  }).then(() => {
-    console.log('starting meta scan');
-    scanQueue.start();
   });
 }
