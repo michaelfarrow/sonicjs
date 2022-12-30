@@ -19,7 +19,7 @@ export default function ensureTrackMeta(item: LibraryItem) {
       hash(libraryPathRel(item.path))
     ).include((t) => t.album);
 
-    if (track && (!track.metaFetched || !track.size)) {
+    if (track && !track.metaFetched) {
       const libPath = libraryPath(track.path);
       const meta = await parseFile(libPath);
       const stat = await fs.stat(libPath);
