@@ -3,7 +3,7 @@ import log from '@/logger';
 import { LibraryItem } from '@/library';
 import { hash } from '@/utils/hash';
 import { libraryPathRel } from '@/utils/path';
-import { AlbumRepository } from '@/db';
+import { AlbumRepository, TrackRepository } from '@/db';
 import Track from '@/models/Track';
 
 export default function ensureTrack(item: LibraryItem) {
@@ -11,13 +11,17 @@ export default function ensureTrack(item: LibraryItem) {
     log('ensuring track', libraryPathRel(item.path));
 
     const relPath = libraryPathRel(item.path);
+    const id = hash(relPath);
+
+    if (await TrackRepository.getById(id)) return;
 
     const trackAlbum = await AlbumRepository.getById(
       hash(libraryPathRel(item.parent))
     );
+
     if (trackAlbum) {
       const track = new Track();
-      track.id = hash(relPath);
+      track.id = id;
       track.item = item.name;
       track.path = relPath;
       track.album = trackAlbum;
