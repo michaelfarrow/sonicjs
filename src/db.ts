@@ -15,7 +15,7 @@ const dataSource = new DataSource({
   database: path.resolve(LIBRARY_PATH, 'db.sqlite'),
   synchronize: true,
   entities: [Artist, Album, Track, Genre, Image],
-  logging: ['query', 'error'],
+  // logging: ['query', 'error'],
 });
 
 export async function initDb() {
