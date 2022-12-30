@@ -1,6 +1,6 @@
-import _, { shuffle } from 'lodash';
+import _ from 'lodash';
 import { ArtistInfo2 } from '@/types';
-import { ArtistRepository, GenreRepository } from '@/db';
+import { ArtistRepository } from '@/db';
 import { Error } from '@/error';
 import genericHandler from './generic';
 import { artistResponse } from '@/api-response';
@@ -25,7 +25,12 @@ export default genericHandler(
       });
     }
 
-    const genres = await GenreRepository.getAll()
+    const genreArtists = await ArtistRepository.getAll()
+      .where((a) => a.id)
+      .notEqual(artist.id)
+      .include((a) => a.albums)
+      .join((a) => a.albums)
+      .thenJoin((album) => album.genres)
       .where((g) => g.id)
       .in(
         _(artist.albums)
@@ -34,22 +39,7 @@ export default genericHandler(
           .map((g) => g.id)
           .uniq()
           .value()
-      )
-      .include((g) => g.albums)
-      .thenInclude((album) => album.artist)
-      .thenInclude((artist) => artist.albums)
-      .include((g) => g.albums)
-      .thenInclude((album) => album.artist)
-      .thenInclude((artist) => artist.image!);
-
-    const genreArtists = _(genres)
-      .map((g) => g.albums)
-      .flatten()
-      .map((a) => a.artist)
-      .uniqBy((a) => a.id)
-      .filter((a) => a.id !== artist.id)
-      .shuffle()
-      .value();
+      );
 
     const response: GetArtistInfo2Response = {
       artistInfo2: {
