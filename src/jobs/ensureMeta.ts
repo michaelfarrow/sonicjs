@@ -51,10 +51,9 @@ export default function ensureMeta(item: LibraryItem) {
     const album = item.parent ? await AlbumRepository.getById(parentId) : null;
 
     if (
-      !artist &&
-      !album /* ||
+      (!artist && !album) ||
       (artist && artist.metaFetched) ||
-      (album && album.metaFetched) */
+      (album && album.metaFetched)
     ) {
       return false;
     }
