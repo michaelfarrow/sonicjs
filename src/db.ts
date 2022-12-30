@@ -22,7 +22,7 @@ export async function initDb() {
   return dataSource
     .initialize()
     .then(() => {
-      log('data Source has been initialized successfully.');
+      log('data source has been initialized successfully.');
     })
     .catch((err) => {
       log('error during Data Source initialization:', err);
