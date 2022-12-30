@@ -17,9 +17,10 @@ export function trackResponse(track: Track, album: Album = track.album): Child {
     id: track.id,
     title: track.name || track.item,
     artist: multiArtist
-      ? (track.artist as string)
-      : album.artist.name || album.artist.item,
-    artistId: !multiArtist ? album.artist.id : undefined,
+      ? (track?.artist as string)
+      : album?.artist.name || album?.artist.item,
+    artistId: !multiArtist ? album?.artist.id : undefined,
+    parent: album?.id || undefined,
     path: track.path,
     album: album?.name || album?.item,
     albumId: album.id,
@@ -29,9 +30,12 @@ export function trackResponse(track: Track, album: Album = track.album): Child {
     // type: 'music',
     discNumber: track.disc || undefined,
     track: track.track || undefined,
+    size: track.size || undefined,
     userRating: track.rating,
     starred: track.starred || undefined,
-    coverArt: album.image ? `${album.image.id}|${album.image.hash}` : undefined,
+    coverArt: album?.image
+      ? `${album.image.id}|${album.image.hash}`
+      : undefined,
     created: track.createdAt,
   };
 }

@@ -1,4 +1,5 @@
 import { parseFile } from 'music-metadata';
+import fs from 'fs-extra';
 import _ from 'lodash';
 import log from '@/logger';
 import { hash } from '@/utils/hash';
@@ -18,8 +19,11 @@ export default function ensureTrackMeta(item: LibraryItem) {
       hash(libraryPathRel(item.path))
     ).include((t) => t.album);
 
-    if (track && !track.metaFetched) {
-      const meta = await parseFile(libraryPath(track.path));
+    if (track && (!track.metaFetched || !track.size)) {
+      const libPath = libraryPath(track.path);
+      const meta = await parseFile(libPath);
+      const stat = await fs.stat(libPath);
+
       const trackAlbum = track.album;
 
       track.name = meta.common.title || null;
@@ -31,7 +35,7 @@ export default function ensureTrackMeta(item: LibraryItem) {
       track.disc = meta.common.disk.no || null;
       track.duration =
         (meta.format.duration && Math.round(meta.format.duration)) || null;
-      track.metaFetched = true;
+      track.size = stat.size;
 
       await track.save();
 

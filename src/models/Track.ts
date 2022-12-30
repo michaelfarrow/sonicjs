@@ -96,6 +96,12 @@ export class Track extends BaseEntity {
   })
   duration!: number | null;
 
+  @Column({
+    type: Number,
+    nullable: true,
+  })
+  size!: number | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
