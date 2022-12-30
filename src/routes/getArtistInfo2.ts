@@ -28,6 +28,7 @@ export default genericHandler(
     const genreArtists = await ArtistRepository.getAll()
       .where((a) => a.id)
       .notEqual(artist.id)
+      .include((a) => a.image)
       .include((a) => a.albums)
       .join((a) => a.albums)
       .thenJoin((album) => album.genres)
