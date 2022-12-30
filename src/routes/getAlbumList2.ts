@@ -28,7 +28,7 @@ export default genericHandler(
     toYear: z.coerce.number().int().min(0).optional(),
     genre: z.string().optional(),
   }),
-  async ({ type, size, offset, fromYear, toYear }, next, res) => {
+  async ({ type, size, offset, fromYear, toYear, genre }, next, res) => {
     const query = AlbumRepository.getAll();
 
     if (size) query.take(size);
@@ -73,11 +73,12 @@ export default genericHandler(
         }
         query.orderBy((a) => a.year);
         break;
-      //   case 'byGenre':
-      // order = {
-      //   year: 'DESC',
-      // };
-      // break;
+      case 'byGenre':
+        query
+          .join((a) => a.genres)
+          .where((g) => g.name)
+          .equal(genre || '');
+        break;
       default:
         query.orderBy((a) => a.rand);
         break;
