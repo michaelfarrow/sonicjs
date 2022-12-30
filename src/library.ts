@@ -158,6 +158,9 @@ export async function initLibrary() {
           jobsQueue.start();
           scanQueue.start();
         }
+
+        jobsQueue.autostart = true;
+        scanQueue.autostart = true;
         resolve(true);
       })
       // Handle change event?

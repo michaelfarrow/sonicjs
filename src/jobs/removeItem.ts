@@ -17,12 +17,18 @@ export default function removeItem(p: string) {
 
     const artist = await ArtistRepository.getById(id);
     const album = await AlbumRepository.getById(id);
-    const track = await TrackRepository.getById(id);
+    const track = await TrackRepository.getById(id).include((t) => t.album);
     const image = await ImageRepository.getById(id);
 
     if (track) {
       log('removing track', relPath);
+
+      const trackAlbum = track.album;
+
       await track.remove();
+
+      await trackAlbum.updateTrackInfo();
+      await trackAlbum.save();
     }
 
     if (album) {

@@ -84,10 +84,7 @@ export default genericHandler(
         break;
     }
 
-    query
-      .include((a) => a.image)
-      .include((a) => a.artist)
-      .include((a) => a.tracks);
+    query.include((a) => a.image).include((a) => a.artist);
 
     const albums = await query;
 

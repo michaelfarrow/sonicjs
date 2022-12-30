@@ -16,10 +16,11 @@ export default function ensureTrackMeta(item: LibraryItem) {
 
     const track = await TrackRepository.getById(
       hash(libraryPathRel(item.path))
-    );
+    ).include((t) => t.album);
 
     if (track && !track.metaFetched) {
       const meta = await parseFile(libraryPath(track.path));
+      const trackAlbum = track.album;
 
       track.name = meta.common.title || null;
       track.artist = meta.common.artist || null;
@@ -33,6 +34,9 @@ export default function ensureTrackMeta(item: LibraryItem) {
       track.metaFetched = true;
 
       await track.save();
+
+      await trackAlbum.updateTrackInfo();
+      await trackAlbum.save();
     }
   };
 }

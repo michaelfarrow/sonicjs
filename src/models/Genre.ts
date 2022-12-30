@@ -18,10 +18,7 @@ export class Genre extends BaseEntity {
 
   get songCount() {
     return (
-      this.albums?.reduce(
-        (acc, current) => (acc += current.tracks?.length || 0),
-        0
-      ) || 0
+      this.albums?.reduce((acc, current) => (acc += current.trackCount), 0) || 0
     );
   }
 }

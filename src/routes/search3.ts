@@ -69,7 +69,6 @@ export default genericHandler(
       albumOffset
     )
       .include((a) => a.artist)
-      .include((a) => a.tracks)
       .include((a) => a.image);
 
     const tracks = await searchAll(

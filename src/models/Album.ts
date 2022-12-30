@@ -20,6 +20,7 @@ import Artist from './Artist';
 import Track from './Track';
 import Image from './Image';
 import Genre from './Genre';
+import { TrackRepository } from '@/db';
 
 @Entity()
 export class Album extends BaseEntity {
@@ -74,6 +75,18 @@ export class Album extends BaseEntity {
   })
   year!: number | null;
 
+  @Column({
+    type: Number,
+    default: 0,
+  })
+  trackCount: number;
+
+  @Column({
+    type: Number,
+    default: 0,
+  })
+  duration: number;
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -94,23 +107,22 @@ export class Album extends BaseEntity {
   @JoinTable()
   genres: Genre[];
 
-  get trackCount() {
-    return this.tracks?.length || 0;
-  }
-
-  get duration() {
-    return (
-      this.tracks?.reduce(
-        (acc, current) => (acc += current.duration || 0),
-        0
-      ) || 0
-    );
-  }
-
   @BeforeInsert()
   @BeforeUpdate()
   updateSortName() {
     this.sortName = sortName(this.name || this.item);
+  }
+
+  async updateTrackInfo() {
+    const tracksQuery = TrackRepository.getAll()
+      .where((t) => t.album)
+      .equal(this.id);
+
+    this.trackCount = await tracksQuery.count();
+
+    this.duration = (await tracksQuery)
+      .map((t) => t.duration || 0)
+      .reduce((acc, current) => (acc += current), 0);
   }
 }
 
