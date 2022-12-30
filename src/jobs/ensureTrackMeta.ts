@@ -1,5 +1,6 @@
 import { parseFile } from 'music-metadata';
 import _ from 'lodash';
+import log from '@/logger';
 import { hash } from '@/utils/hash';
 import { libraryPathRel } from '@/utils/path';
 import { libraryPath } from '@/utils/path';
@@ -11,6 +12,8 @@ const splitGenres = (genres: string) => genres.split(/\s*,\s*/g);
 
 export default function ensureTrackMeta(item: LibraryItem) {
   return async () => {
+    log('ensuring track meta', libraryPathRel(item.path));
+
     const track = await TrackRepository.getById(
       hash(libraryPathRel(item.path))
     );
