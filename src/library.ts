@@ -41,7 +41,7 @@ async function add(item: LibraryItem) {
       break;
     case 'track':
       jobsQueue.push(ensureTrack(item));
-      scanQueue.push(ensureTrackMeta(item));
+      scanQueue.unshift(ensureTrackMeta(item));
       break;
     case 'mbid':
       scanQueue.push(ensureMeta(item));
