@@ -1,7 +1,6 @@
 import path from 'path';
 import chokidar from 'chokidar';
 import fs from 'fs-extra';
-import jobsQueue from '@/jobs';
 import scanQueue from '@/scanner';
 import { CACHE_DIR, LIBRARY_PATH } from '@/config';
 import ensureArtist from './jobs/ensureArtist';
@@ -33,26 +32,26 @@ function isType(p: string, types: string[]) {
 async function add(item: LibraryItem) {
   switch (item.type) {
     case 'artist':
-      jobsQueue.push(ensureArtist(item));
+      scanQueue.push(ensureArtist(item));
       break;
     case 'album':
-      jobsQueue.push(ensureAlbum(item));
+      scanQueue.push(ensureAlbum(item));
       break;
     case 'track':
-      jobsQueue.push(ensureTrack(item));
-      jobsQueue.push(ensureTrackMeta(item));
+      scanQueue.push(ensureTrack(item));
+      scanQueue.push(ensureTrackMeta(item));
       break;
     case 'mbid':
       scanQueue.push(ensureMeta(item));
       break;
     case 'image':
-      jobsQueue.push(ensureImage(item));
+      scanQueue.push(ensureImage(item));
       break;
   }
 }
 
 function remove(p: string) {
-  jobsQueue.push(removeItem(p));
+  scanQueue.push(removeItem(p));
 }
 
 export async function initLibrary() {
@@ -150,17 +149,15 @@ export async function initLibrary() {
 
         scanQueue.push(cleanup);
 
-        if (jobsQueue.length) {
-          jobsQueue.start();
-          jobsQueue.on('end', () => {
+        if (scanQueue.length) {
+          scanQueue.start();
+          scanQueue.on('end', () => {
             scanQueue.start();
           });
         } else {
-          jobsQueue.start();
           scanQueue.start();
         }
 
-        jobsQueue.autostart = true;
         scanQueue.autostart = true;
         resolve(true);
       })

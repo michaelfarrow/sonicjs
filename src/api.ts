@@ -21,6 +21,7 @@ import setRating from '@/routes/setRating';
 import star from '@/routes/star';
 import unstar from '@/routes/unstar';
 import scrobble from '@/routes/scrobble';
+import scanStatus from '@/routes/scanStatus';
 
 const api = Router();
 
@@ -48,6 +49,8 @@ route('/setRating', setRating);
 route('/star', star);
 route('/unstar', unstar);
 route('/scrobble', scrobble);
+route('/getScanStatus', scanStatus);
+route('/startScan', scanStatus);
 
 api.use(notFound);
 api.use(error);

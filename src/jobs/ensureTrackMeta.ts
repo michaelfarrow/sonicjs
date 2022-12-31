@@ -8,8 +8,8 @@ import { libraryPath } from '@/utils/path';
 import { LibraryItem } from '@/library';
 import { TrackRepository } from '@/db';
 
-const splitArtists = (artists: string) => artists.split(/\s*;\s*/g);
-const splitGenres = (genres: string) => genres.split(/\s*,\s*/g);
+// const splitArtists = (artists: string) => artists.split(/\s*;\s*/g);
+// const splitGenres = (genres: string) => genres.split(/\s*,\s*/g);
 
 export default function ensureTrackMeta(item: LibraryItem) {
   return async () => {
