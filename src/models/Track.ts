@@ -4,11 +4,13 @@ import {
   PrimaryColumn,
   Column,
   ManyToOne,
+  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
 import Album from './Album';
+import PlaylistTrack from './PlaylistTrack';
 
 @Entity()
 export class Track extends BaseEntity {
@@ -110,6 +112,9 @@ export class Track extends BaseEntity {
 
   @ManyToOne(() => Album)
   album: Album;
+
+  @OneToMany(() => PlaylistTrack, (playlistTrack) => playlistTrack.track)
+  playlistTrack!: PlaylistTrack[];
 }
 
 export default Track;

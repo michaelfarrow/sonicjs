@@ -9,12 +9,14 @@ import Album from '@/models/Album';
 import Track from '@/models/Track';
 import Genre from '@/models/Genre';
 import Image from '@/models/Image';
+import Playlist from '@/models/Playlist';
+import PlaylistTrack from '@/models/PlaylistTrack';
 
 const dataSource = new DataSource({
   type: 'sqlite',
   database: path.resolve(LIBRARY_PATH, 'db.sqlite'),
   synchronize: true,
-  entities: [Artist, Album, Track, Genre, Image],
+  entities: [Artist, Album, Track, Genre, Image, Playlist, PlaylistTrack],
   // logging: ['query', 'error'],
 });
 
@@ -48,5 +50,7 @@ export const ImageRepository = new LinqRepository(dataSource, Image, {
 export const GenreRepository = new LinqRepository(dataSource, Genre, {
   autoGenerateId: false,
 });
+
+export const PlaylistRepository = new LinqRepository(dataSource, Playlist);
 
 export default dataSource;

@@ -22,6 +22,13 @@ import star from '@/routes/star';
 import unstar from '@/routes/unstar';
 import scrobble from '@/routes/scrobble';
 import scanStatus from '@/routes/scanStatus';
+import getIndexes from '@/routes/getIndexes';
+import getMusicDirectory from '@/routes/getMusicDirectory';
+import createPlaylist from '@/routes/createPlaylist';
+import updatePlaylist from '@/routes/updatePlaylist';
+import deletePlaylist from '@/routes/deletePlaylist';
+import getPlaylists from '@/routes/getPlaylists';
+import getPlaylist from '@/routes/getPlaylist';
 
 const api = Router();
 
@@ -51,6 +58,13 @@ route('/unstar', unstar);
 route('/scrobble', scrobble);
 route('/getScanStatus', scanStatus);
 route('/startScan', scanStatus);
+route('/getIndexes', getIndexes);
+route('/getMusicDirectory', getMusicDirectory);
+route('/createPlaylist', createPlaylist);
+route('/updatePlaylist', updatePlaylist);
+route('/deletePlaylist', deletePlaylist);
+route('/getPlaylists', getPlaylists);
+route('/getPlaylist', getPlaylist);
 
 api.use(notFound);
 api.use(error);

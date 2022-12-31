@@ -36,7 +36,7 @@ function getXmlNodeInfo(o: any) {
       children.push(String(val));
     } else {
       if (val instanceof Date) {
-        attrs[key] = val.toDateString();
+        attrs[key] = val.toISOString();
       } else if (val !== undefined && val !== null) {
         attrs[key] = val;
       }

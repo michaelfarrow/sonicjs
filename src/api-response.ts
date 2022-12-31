@@ -4,10 +4,13 @@ import {
   ArtistID3,
   ArtistWithAlbumsID3,
   Child,
+  Playlist as SonicPlaylist,
+  PlaylistWithSongs,
 } from '@/types';
 import Artist from '@/models/Artist';
 import Album from '@/models/Album';
 import Track from '@/models/Track';
+import Playlist from '@/models/Playlist';
 
 export function trackResponse(track: Track, album: Album = track.album): Child {
   const multiArtist =
@@ -81,5 +84,29 @@ export function artistWithAlbumsResponse(artist: Artist): ArtistWithAlbumsID3 {
   return {
     ...artistResponse(artist),
     album: artist.albums.map((album) => albumResponse(album, artist)),
+  };
+}
+
+export function playlistResponse(playlist: Playlist): SonicPlaylist {
+  return {
+    id: String(playlist.id),
+    name: playlist.name,
+    comment: playlist.comment || undefined,
+    songCount: playlist.trackCount,
+    duration: playlist.duration,
+    public: playlist.public,
+    created: playlist.createdAt,
+    changed: playlist.updatedAt,
+  };
+}
+
+export function playlistWithSongsResponse(
+  playlist: Playlist
+): PlaylistWithSongs {
+  return {
+    ...playlistResponse(playlist),
+    entry: playlist.tracks.map((playlistTrack) =>
+      trackResponse(playlistTrack.track)
+    ),
   };
 }
