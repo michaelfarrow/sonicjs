@@ -66,7 +66,9 @@ export default function ensureMeta(item: LibraryItem) {
 
       artist.mbid = mbid;
       artist.name = info.name;
-      artist.bio = bio || null;
+      artist.bio =
+        (bio && bio.replace(/\n/g, '\n\n').replace(/(\n){2,}/g, '\n\n')) ||
+        null;
       artist.metaFetched = true;
 
       await artist.save();

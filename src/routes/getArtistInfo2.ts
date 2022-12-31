@@ -44,10 +44,7 @@ export default genericHandler(
 
     const response: GetArtistInfo2Response = {
       artistInfo2: {
-        biography:
-          (artist.bio &&
-            artist.bio.replace(/\n/g, '\n\n').replace(/(\n){2,}/g, '\n\n')) ||
-          undefined,
+        biography: artist.bio || undefined,
         musicBrainzId: artist.mbid || undefined,
         similarArtist: genreArtists.map((artist) => artistResponse(artist)),
       },
