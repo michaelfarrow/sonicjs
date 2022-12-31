@@ -52,7 +52,7 @@ export default function ensureMeta(item: LibraryItem) {
 
     if (
       (!artist && !album) ||
-      (artist && artist.metaFetched) ||
+      /* (artist && artist.metaFetched) || */
       (album && album.metaFetched)
     ) {
       return false;
