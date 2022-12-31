@@ -5,6 +5,7 @@ import {
   AlbumRepository,
   TrackRepository,
   ImageRepository,
+  GenreRepository,
 } from '@/db';
 import { hash } from '@/utils/hash';
 import { libraryPathRel, imagePath } from '@/utils/path';
@@ -33,6 +34,15 @@ export default function removeItem(p: string) {
     if (album) {
       log('removing album', relPath);
       await album.remove();
+
+      const genresToRemove = (
+        await GenreRepository.getAll().include((g) => g.albums)
+      ).filter((g) => !g.albumCount);
+
+      for (const genre of genresToRemove) {
+        log('removing genre', genre.name);
+        await genre.remove();
+      }
     }
 
     if (artist) {
@@ -47,6 +57,7 @@ export default function removeItem(p: string) {
       const cacheDir = imagePath(image.hash);
 
       if (await fs.pathExists(cacheDir)) {
+        log('removing image cache', cacheDir);
         await fs.remove(cacheDir);
       }
     }
