@@ -36,6 +36,7 @@ export default function ensureTrackMeta(item: LibraryItem) {
       track.duration =
         (meta.format.duration && Math.round(meta.format.duration)) || null;
       track.size = stat.size;
+      track.metaFetched = true;
 
       await track.save();
 

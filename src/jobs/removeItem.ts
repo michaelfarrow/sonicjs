@@ -1,3 +1,4 @@
+import fs from 'fs-extra';
 import log from '@/logger';
 import {
   ArtistRepository,
@@ -6,12 +7,10 @@ import {
   ImageRepository,
 } from '@/db';
 import { hash } from '@/utils/hash';
-import { libraryPathRel } from '@/utils/path';
+import { libraryPathRel, imagePath } from '@/utils/path';
 
 export default function removeItem(p: string) {
   return async () => {
-    console.log('removeItem', p);
-
     const relPath = libraryPathRel(p);
     const id = hash(relPath);
 
@@ -44,6 +43,12 @@ export default function removeItem(p: string) {
     if (image) {
       log('removing image', relPath);
       await image.remove();
+
+      const cacheDir = imagePath(image.hash);
+
+      if (await fs.pathExists(cacheDir)) {
+        await fs.remove(cacheDir);
+      }
     }
   };
 }

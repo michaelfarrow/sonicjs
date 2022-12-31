@@ -4,8 +4,6 @@ import fs from 'fs-extra';
 import jobsQueue from '@/jobs';
 import scanQueue from '@/scanner';
 import { CACHE_DIR, LIBRARY_PATH } from '@/config';
-import cleanImages from '@/jobs/cleanImages';
-import cleanMeta from '@/jobs/cleanMeta';
 import ensureArtist from './jobs/ensureArtist';
 import ensureAlbum from './jobs/ensureAlbum';
 import ensureTrack from './jobs/ensureTrack';
@@ -13,6 +11,7 @@ import ensureMeta from '@/jobs/ensureMeta';
 import ensureTrackMeta from '@/jobs/ensureTrackMeta';
 import ensureImage from '@/jobs/ensureImage';
 import removeItem from '@/jobs/removeItem';
+import cleanup from './jobs/cleanup';
 
 const MUSIC_TYPES = ['m4a', 'mp3'];
 const IMAGE_TYPES = ['jpg', 'jpeg', 'png', 'webp'];
@@ -148,6 +147,8 @@ export async function initLibrary() {
         // queue(cleanImages);
         // queue(cleanMeta);
         console.log('initial library scan complete.');
+
+        scanQueue.push(cleanup);
 
         if (jobsQueue.length) {
           jobsQueue.start();
