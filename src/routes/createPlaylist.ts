@@ -21,7 +21,11 @@ export default genericHandler(
     let playlist: Playlist | null = null;
 
     if (playlistId) {
-      playlist = await PlaylistRepository.getById(playlistId);
+      playlist = await PlaylistRepository.getById(playlistId)
+        .toPromise()
+        .catch((e) => {
+          throw e;
+        });
     } else {
       playlist = new Playlist();
     }
@@ -34,11 +38,18 @@ export default genericHandler(
     }
 
     if (name !== undefined) playlist.name = name;
+
+    await playlist.save();
+
     if (songId) {
       const _songId = Array.isArray(songId) ? songId : [songId];
       const tracks = await TrackRepository.getAll()
         .where((t) => t.id)
-        .in(_songId);
+        .in(_songId)
+        .toPromise()
+        .catch((e) => {
+          throw e;
+        });
 
       const playlistTracks: PlaylistTrack[] = [];
 

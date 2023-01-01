@@ -15,7 +15,11 @@ export default async function getGenres(
 ) {
   const genres = await GenreRepository.getAll()
     .orderBy((g) => g.name)
-    .include((g) => g.albums);
+    .include((g) => g.albums)
+    .toPromise()
+    .catch((e) => {
+      throw e;
+    });
 
   const response: GetStarred2Response = {
     genres: {

@@ -13,11 +13,22 @@ export default function ensureTrack(item: LibraryItem) {
     const relPath = libraryPathRel(item.path);
     const id = hash(relPath);
 
-    if (await TrackRepository.getById(id)) return;
+    if (
+      await TrackRepository.getById(id)
+        .toPromise()
+        .catch((e) => {
+          throw e;
+        })
+    )
+      return;
 
     const trackAlbum = await AlbumRepository.getById(
       hash(libraryPathRel(item.parent))
-    );
+    )
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
 
     if (trackAlbum) {
       const track = new Track();

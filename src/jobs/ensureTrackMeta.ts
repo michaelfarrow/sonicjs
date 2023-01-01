@@ -15,9 +15,12 @@ export default function ensureTrackMeta(item: LibraryItem) {
   return async () => {
     log('ensuring track meta', libraryPathRel(item.path));
 
-    const track = await TrackRepository.getById(
-      hash(libraryPathRel(item.path))
-    ).include((t) => t.album);
+    const track = await TrackRepository.getById(hash(libraryPathRel(item.path)))
+      .include((t) => t.album)
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
 
     if (track && !track.metaFetched) {
       const libPath = libraryPath(track.path);

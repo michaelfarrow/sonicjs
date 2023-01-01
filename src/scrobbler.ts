@@ -1,3 +1,4 @@
+import log from '@/logger';
 import { default as queueLib } from 'queue';
 import { TrackRepository } from '@/db';
 
@@ -6,12 +7,12 @@ const CONCURRENCY = 1;
 export const q = queueLib({ concurrency: CONCURRENCY, autostart: true });
 
 q.on('error', (error) => {
-  console.log('scrobble job error');
-  console.error(error);
+  log('scrobble job error');
+  log(error);
 });
 
 q.on('end', (error) => {
-  error && console.error(error);
+  error && log(error);
 });
 
 export default function srobble(id: string | string[]) {
@@ -19,7 +20,11 @@ export default function srobble(id: string | string[]) {
     const tracks = await TrackRepository.getAll()
       .where((t) => t.id)
       .in(Array.isArray(id) ? id : [id])
-      .include((a) => a.album);
+      .include((a) => a.album)
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
 
     const played = new Date();
 
@@ -30,7 +35,7 @@ export default function srobble(id: string | string[]) {
         played.getTime() - track.lastPlayed.getTime() >
           (track.duration || 60 * 3) * 1000
       ) {
-        track.album.plays = track.album.plays + 1;
+        track.album.plays = null as any;
         track.album.lastPlayed = played;
         await track.album.save();
 

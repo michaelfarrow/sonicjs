@@ -24,7 +24,11 @@ export default async function (
   const artists = await ArtistRepository.getAll()
     .orderBy((a) => a.sortName)
     .include((a) => a.image)
-    .include((a) => a.albums);
+    .include((a) => a.albums)
+    .toPromise()
+    .catch((e) => {
+      throw e;
+    });
 
   const indexedArtists = artists.reduce<{
     [key: string]: { group: string; artists: typeof artists };

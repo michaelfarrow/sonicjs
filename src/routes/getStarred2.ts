@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { BaseEntity } from 'typeorm';
 import { LinqRepository } from 'typeorm-linq-repository';
 import { Starred2 } from '@/types';
 import { ArtistRepository, AlbumRepository, TrackRepository } from '@/db';
@@ -28,17 +27,29 @@ export default async function (
   const albums = await getStarred(AlbumRepository)
     .include((a) => a.artist)
     .include((a) => a.image)
-    .include((a) => a.tracks);
+    .include((a) => a.tracks)
+    .toPromise()
+    .catch((e) => {
+      throw e;
+    });
 
   const artists = await getStarred(ArtistRepository)
     .include((a) => a.image)
-    .include((a) => a.albums);
+    .include((a) => a.albums)
+    .toPromise()
+    .catch((e) => {
+      throw e;
+    });
 
   const tracks = await getStarred(TrackRepository)
     .include((a) => a.album)
     .thenInclude((album) => album.artist)
     .include((a) => a.album)
-    .thenInclude((album) => album.image!);
+    .thenInclude((album) => album.image!)
+    .toPromise()
+    .catch((e) => {
+      throw e;
+    });
 
   const response: GetStarred2Response = {
     starred2: {

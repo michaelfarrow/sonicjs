@@ -15,7 +15,11 @@ export default async function getPlaylists(
   const playlists = await PlaylistRepository.getAll()
     .orderBy((p) => p.updatedAt)
     .include((p) => p.tracks)
-    .thenInclude((playlistTrack) => playlistTrack.track);
+    .thenInclude((playlistTrack) => playlistTrack.track)
+    .toPromise()
+    .catch((e) => {
+      throw e;
+    });
 
   const response: GetPlaylistsResponse = {
     playlists: {

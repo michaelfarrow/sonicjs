@@ -19,9 +19,13 @@ export default class PlaylistTrack extends BaseEntity {
   @Column()
   trackId: string;
 
-  @ManyToOne(() => Playlist, (playlist) => playlist.tracks)
+  @ManyToOne(() => Playlist, (playlist) => playlist.tracks, {
+    onDelete: 'CASCADE',
+  })
   playlist!: Playlist;
 
-  @ManyToOne(() => Track, (track) => track.playlistTrack)
+  @ManyToOne(() => Track, (track) => track.playlistTrack, {
+    onDelete: 'CASCADE',
+  })
   track!: Track;
 }

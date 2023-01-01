@@ -13,8 +13,16 @@ export default genericHandler(
   async ({ id }, next, res) => {
     const album = await AlbumRepository.getById(id)
       .include((a) => a.artist)
-      .include((a) => a.tracks);
-    const track = await TrackRepository.getById(id);
+      .include((a) => a.tracks)
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
+    const track = await TrackRepository.getById(id)
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
 
     if (!track && !album) {
       return next({

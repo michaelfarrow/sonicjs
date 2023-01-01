@@ -12,7 +12,14 @@ export default function ensureArtist(item: LibraryItem) {
     const relPath = libraryPathRel(item.path);
     const id = hash(relPath);
 
-    if (await ArtistRepository.getById(id)) return;
+    if (
+      await ArtistRepository.getById(id)
+        .toPromise()
+        .catch((e) => {
+          throw e;
+        })
+    )
+      return;
 
     const artist = new Artist();
     artist.id = id;

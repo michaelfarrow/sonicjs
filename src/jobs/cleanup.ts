@@ -12,10 +12,26 @@ import { libraryPath } from '@/utils/path';
 export default async function cleanup() {
   log('cleaning up');
 
-  const images = await ImageRepository.getAll();
-  const tracks = await TrackRepository.getAll();
-  const albums = await AlbumRepository.getAll();
-  const artists = await ArtistRepository.getAll();
+  const images = await ImageRepository.getAll()
+    .toPromise()
+    .catch((e) => {
+      throw e;
+    });
+  const tracks = await TrackRepository.getAll()
+    .toPromise()
+    .catch((e) => {
+      throw e;
+    });
+  const albums = await AlbumRepository.getAll()
+    .toPromise()
+    .catch((e) => {
+      throw e;
+    });
+  const artists = await ArtistRepository.getAll()
+    .toPromise()
+    .catch((e) => {
+      throw e;
+    });
 
   for (const image of images) {
     const imagePath = libraryPath(image.path);

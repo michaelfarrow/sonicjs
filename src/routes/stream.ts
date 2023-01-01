@@ -10,7 +10,11 @@ export default genericHandler(
     id: z.string().uuid(),
   }),
   async ({ id }, next, res, req) => {
-    const track = await TrackRepository.getById(id);
+    const track = await TrackRepository.getById(id)
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
 
     if (!track) {
       return next({

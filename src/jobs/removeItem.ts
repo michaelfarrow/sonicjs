@@ -15,10 +15,27 @@ export default function removeItem(p: string) {
     const relPath = libraryPathRel(p);
     const id = hash(relPath);
 
-    const artist = await ArtistRepository.getById(id);
-    const album = await AlbumRepository.getById(id);
-    const track = await TrackRepository.getById(id).include((t) => t.album);
-    const image = await ImageRepository.getById(id);
+    const artist = await ArtistRepository.getById(id)
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
+    const album = await AlbumRepository.getById(id)
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
+    const track = await TrackRepository.getById(id)
+      .include((t) => t.album)
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
+    const image = await ImageRepository.getById(id)
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
 
     if (track) {
       log('removing track', relPath);
@@ -36,7 +53,12 @@ export default function removeItem(p: string) {
       await album.remove();
 
       const genresToRemove = (
-        await GenreRepository.getAll().include((g) => g.albums)
+        await GenreRepository.getAll()
+          .include((g) => g.albums)
+          .toPromise()
+          .catch((e) => {
+            throw e;
+          })
       ).filter((g) => !g.albumCount);
 
       for (const genre of genresToRemove) {

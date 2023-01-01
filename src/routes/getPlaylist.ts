@@ -23,7 +23,11 @@ export default genericHandler(
       .include((p) => p.tracks)
       .thenInclude((playlistTrack) => playlistTrack.track)
       .thenInclude((track) => track.album)
-      .thenInclude((album) => album.image!);
+      .thenInclude((album) => album.image!)
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
 
     if (!playlist) {
       return next({

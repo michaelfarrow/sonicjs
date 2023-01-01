@@ -19,7 +19,11 @@ export default genericHandler(
       .orderBy((album) => album.year)
       .thenInclude((album) => album.tracks)
       .include((a) => a.albums)
-      .thenInclude((album) => album.image!);
+      .thenInclude((album) => album.image!)
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
 
     if (!artist) {
       return next({

@@ -60,7 +60,11 @@ export default genericHandler(
       artistOffset
     )
       .include((a) => a.albums)
-      .include((a) => a.image);
+      .include((a) => a.image)
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
 
     const albums = await searchAll(
       AlbumRepository,
@@ -69,7 +73,11 @@ export default genericHandler(
       albumOffset
     )
       .include((a) => a.artist)
-      .include((a) => a.image);
+      .include((a) => a.image)
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
 
     const tracks = await searchAll(
       TrackRepository,
@@ -80,7 +88,11 @@ export default genericHandler(
       .include((a) => a.album)
       .thenInclude((album) => album.artist)
       .include((a) => a.album)
-      .thenInclude((album) => album.image!);
+      .thenInclude((album) => album.image!)
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
 
     const response: SearchResult3Response = {
       searchResult3: {

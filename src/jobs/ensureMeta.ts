@@ -47,8 +47,18 @@ export default function ensureMeta(item: LibraryItem) {
 
     const artist = item.parent
       ? await ArtistRepository.getById(parentId)
+          .toPromise()
+          .catch((e) => {
+            throw e;
+          })
       : null;
-    const album = item.parent ? await AlbumRepository.getById(parentId) : null;
+    const album = item.parent
+      ? await AlbumRepository.getById(parentId)
+          .toPromise()
+          .catch((e) => {
+            throw e;
+          })
+      : null;
 
     if (
       (!artist && !album) ||

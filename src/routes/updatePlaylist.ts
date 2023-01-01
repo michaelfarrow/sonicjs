@@ -26,9 +26,12 @@ export default genericHandler(
     next,
     res
   ) => {
-    const playlist = await PlaylistRepository.getById(playlistId).include(
-      (p) => p.tracks
-    );
+    const playlist = await PlaylistRepository.getById(playlistId)
+      .include((p) => p.tracks)
+      .toPromise()
+      .catch((e) => {
+        throw e;
+      });
 
     if (!playlist) {
       return next({
@@ -51,7 +54,11 @@ export default genericHandler(
 
       const tracksToAdd = await TrackRepository.getAll()
         .where((t) => t.id)
-        .in(_songIdToAdd);
+        .in(_songIdToAdd)
+        .toPromise()
+        .catch((e) => {
+          throw e;
+        });
 
       for (const trackToAdd of tracksToAdd) {
         const playlistTrack = new PlaylistTrack();
@@ -64,8 +71,6 @@ export default genericHandler(
     }
 
     if (songIndexToRemove !== undefined) {
-      console.log(songIndexToRemove);
-
       const _songIndexToRemove = Array.isArray(songIndexToRemove)
         ? songIndexToRemove
         : [songIndexToRemove];

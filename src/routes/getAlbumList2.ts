@@ -86,7 +86,9 @@ export default genericHandler(
 
     query.include((a) => a.image).include((a) => a.artist);
 
-    const albums = await query;
+    const albums = await query.toPromise().catch((e) => {
+      throw e;
+    });
 
     const response: any = {
       albumList2: {
