@@ -27,9 +27,6 @@ export default function ensureTrack(item: LibraryItem) {
       track.album = trackAlbum;
       track.type = mime.lookup(item.path) || null;
       await track.save();
-
-      await trackAlbum.updateTrackInfo();
-      await trackAlbum.save();
     }
   };
 }

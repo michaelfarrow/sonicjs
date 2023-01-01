@@ -3,14 +3,15 @@ import chokidar from 'chokidar';
 import fs from 'fs-extra';
 import scanQueue from '@/scanner';
 import { CACHE_DIR, LIBRARY_PATH } from '@/config';
-import ensureArtist from './jobs/ensureArtist';
-import ensureAlbum from './jobs/ensureAlbum';
-import ensureTrack from './jobs/ensureTrack';
+import ensureArtist from '@/jobs/ensureArtist';
+import ensureAlbum from '@/jobs/ensureAlbum';
+import ensureTrack from '@/jobs/ensureTrack';
 import ensureMeta from '@/jobs/ensureMeta';
 import ensureTrackMeta from '@/jobs/ensureTrackMeta';
 import ensureImage from '@/jobs/ensureImage';
 import removeItem from '@/jobs/removeItem';
-import cleanup from './jobs/cleanup';
+import cleanup from '@/jobs/cleanup';
+import updateAlbumTrackInfo from '@/jobs/updateAlbumTrackInfo';
 
 const MUSIC_TYPES = ['m4a', 'mp3'];
 const IMAGE_TYPES = ['jpg', 'jpeg', 'png', 'webp'];
@@ -148,6 +149,7 @@ export async function initLibrary() {
         console.log('initial library scan complete.');
 
         scanQueue.push(cleanup);
+        scanQueue.push(updateAlbumTrackInfo);
 
         if (scanQueue.length) {
           scanQueue.start();
