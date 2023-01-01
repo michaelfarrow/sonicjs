@@ -17,10 +17,7 @@ export default genericHandler(
     const artist = await ArtistRepository.getById(id)
       .include((a) => a.albums)
       .thenInclude((album) => album.genres)
-      .toPromise()
-      .catch((e) => {
-        throw e;
-      });
+      .toPromise();
 
     if (!artist) {
       return next({
@@ -45,10 +42,7 @@ export default genericHandler(
           .uniq()
           .value()
       )
-      .toPromise()
-      .catch((e) => {
-        throw e;
-      });
+      .toPromise();
 
     const response: GetArtistInfo2Response = {
       artistInfo2: {

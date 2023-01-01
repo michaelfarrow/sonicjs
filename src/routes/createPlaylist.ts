@@ -21,11 +21,7 @@ export default genericHandler(
     let playlist: Playlist | null = null;
 
     if (playlistId) {
-      playlist = await PlaylistRepository.getById(playlistId)
-        .toPromise()
-        .catch((e) => {
-          throw e;
-        });
+      playlist = await PlaylistRepository.getById(playlistId).toPromise();
     } else {
       playlist = new Playlist();
     }
@@ -46,11 +42,7 @@ export default genericHandler(
       const tracks = await TrackRepository.getAll()
         .where((t) => t.id)
         .in(_songId)
-        .toPromise()
-        .catch((e) => {
-          throw e;
-        });
-
+        .toPromise();
       const playlistTracks: PlaylistTrack[] = [];
 
       for (const track of tracks) {

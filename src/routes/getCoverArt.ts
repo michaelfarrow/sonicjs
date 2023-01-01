@@ -21,10 +21,7 @@ export default genericHandler(
     const image = await ImageRepository.getById(id)
       .where((i) => i.hash)
       .equal(hash)
-      .toPromise()
-      .catch((e) => {
-        throw e;
-      });
+      .toPromise();
 
     if (!image) {
       return next({

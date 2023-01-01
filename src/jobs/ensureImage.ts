@@ -14,30 +14,17 @@ export default function ensureImage(item: LibraryItem) {
     const parentId = hash(libraryPathRel(item.parent));
     const id = hash(relPath);
 
-    if (
-      await ImageRepository.getById(id)
-        .toPromise()
-        .catch((e) => {
-          throw e;
-        })
-    )
-      return;
+    if (await ImageRepository.getById(id).toPromise()) return;
 
     const artist = item.parent
       ? await ArtistRepository.getById(parentId)
           .include((a) => a.image)
           .toPromise()
-          .catch((e) => {
-            throw e;
-          })
       : null;
     const album = item.parent
       ? await AlbumRepository.getById(parentId)
           .include((a) => a.image)
           .toPromise()
-          .catch((e) => {
-            throw e;
-          })
       : null;
 
     const parent = artist || album;

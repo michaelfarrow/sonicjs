@@ -15,24 +15,9 @@ export default function (star: boolean) {
     async ({ id, artistId, albumId }, next, res) => {
       let item: Artist | Album | Track | null = null;
 
-      if (artistId)
-        item = await ArtistRepository.getById(artistId)
-          .toPromise()
-          .catch((e) => {
-            throw e;
-          });
-      if (albumId)
-        item = await AlbumRepository.getById(albumId)
-          .toPromise()
-          .catch((e) => {
-            throw e;
-          });
-      if (id)
-        item = await TrackRepository.getById(id)
-          .toPromise()
-          .catch((e) => {
-            throw e;
-          });
+      if (artistId) item = await ArtistRepository.getById(artistId).toPromise();
+      if (albumId) item = await AlbumRepository.getById(albumId).toPromise();
+      if (id) item = await TrackRepository.getById(id).toPromise();
 
       if (!item) {
         return next({

@@ -7,11 +7,7 @@ export default genericHandler(
     id: z.coerce.number(),
   }),
   async ({ id }, next, res) => {
-    const playlist = await PlaylistRepository.getById(id)
-      .toPromise()
-      .catch((e) => {
-        throw e;
-      });
+    const playlist = await PlaylistRepository.getById(id).toPromise();
 
     if (!playlist) {
       return next({

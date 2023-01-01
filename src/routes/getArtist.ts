@@ -20,10 +20,7 @@ export default genericHandler(
       .thenInclude((album) => album.tracks)
       .include((a) => a.albums)
       .thenInclude((album) => album.image!)
-      .toPromise()
-      .catch((e) => {
-        throw e;
-      });
+      .toPromise();
 
     if (!artist) {
       return next({

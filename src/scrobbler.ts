@@ -21,11 +21,7 @@ export default function srobble(id: string | string[]) {
       .where((t) => t.id)
       .in(Array.isArray(id) ? id : [id])
       .include((a) => a.album)
-      .toPromise()
-      .catch((e) => {
-        throw e;
-      });
-
+      .toPromise();
     const played = new Date();
 
     for (const track of tracks) {

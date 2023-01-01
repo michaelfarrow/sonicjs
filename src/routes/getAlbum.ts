@@ -20,10 +20,7 @@ export default genericHandler(
       .orderBy((track) => track.disc)
       .thenBy((track) => track.track)
       .thenBy((track) => track.name)
-      .toPromise()
-      .catch((e) => {
-        throw e;
-      });
+      .toPromise();
 
     if (!album) {
       return next({

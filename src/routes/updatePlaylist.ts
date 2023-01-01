@@ -28,10 +28,7 @@ export default genericHandler(
   ) => {
     const playlist = await PlaylistRepository.getById(playlistId)
       .include((p) => p.tracks)
-      .toPromise()
-      .catch((e) => {
-        throw e;
-      });
+      .toPromise();
 
     if (!playlist) {
       return next({
@@ -55,10 +52,7 @@ export default genericHandler(
       const tracksToAdd = await TrackRepository.getAll()
         .where((t) => t.id)
         .in(_songIdToAdd)
-        .toPromise()
-        .catch((e) => {
-          throw e;
-        });
+        .toPromise();
 
       for (const trackToAdd of tracksToAdd) {
         const playlistTrack = new PlaylistTrack();

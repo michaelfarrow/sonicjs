@@ -8,11 +8,7 @@ export default genericHandler(
     rating: z.coerce.number().min(0).max(5),
   }),
   async ({ id, rating }, next, res) => {
-    const track = await TrackRepository.getById(id)
-      .toPromise()
-      .catch((e) => {
-        throw e;
-      });
+    const track = await TrackRepository.getById(id).toPromise();
 
     if (!track) {
       return next({

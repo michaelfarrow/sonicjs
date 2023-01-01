@@ -12,23 +12,11 @@ export default function ensureAlbum(item: LibraryItem) {
     const relPath = libraryPathRel(item.path);
     const id = hash(relPath);
 
-    if (
-      await AlbumRepository.getById(id)
-        .toPromise()
-        .catch((e) => {
-          throw e;
-        })
-    )
-      return;
+    if (await AlbumRepository.getById(id).toPromise()) return;
 
     const albumArtist = await ArtistRepository.getById(
       hash(libraryPathRel(item.parent))
-    )
-      .toPromise()
-      .catch((e) => {
-        throw e;
-      });
-
+    ).toPromise();
     if (albumArtist) {
       const album = new Album();
       album.id = id;

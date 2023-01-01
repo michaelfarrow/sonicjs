@@ -28,28 +28,19 @@ export default async function (
     .include((a) => a.artist)
     .include((a) => a.image)
     .include((a) => a.tracks)
-    .toPromise()
-    .catch((e) => {
-      throw e;
-    });
+    .toPromise();
 
   const artists = await getStarred(ArtistRepository)
     .include((a) => a.image)
     .include((a) => a.albums)
-    .toPromise()
-    .catch((e) => {
-      throw e;
-    });
+    .toPromise();
 
   const tracks = await getStarred(TrackRepository)
     .include((a) => a.album)
     .thenInclude((album) => album.artist)
     .include((a) => a.album)
     .thenInclude((album) => album.image!)
-    .toPromise()
-    .catch((e) => {
-      throw e;
-    });
+    .toPromise();
 
   const response: GetStarred2Response = {
     starred2: {

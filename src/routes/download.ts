@@ -14,15 +14,8 @@ export default genericHandler(
     const album = await AlbumRepository.getById(id)
       .include((a) => a.artist)
       .include((a) => a.tracks)
-      .toPromise()
-      .catch((e) => {
-        throw e;
-      });
-    const track = await TrackRepository.getById(id)
-      .toPromise()
-      .catch((e) => {
-        throw e;
-      });
+      .toPromise();
+    const track = await TrackRepository.getById(id).toPromise();
 
     if (!track && !album) {
       return next({

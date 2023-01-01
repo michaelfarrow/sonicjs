@@ -25,10 +25,7 @@ export default async function (
     .orderBy((a) => a.sortName)
     .include((a) => a.image)
     .include((a) => a.albums)
-    .toPromise()
-    .catch((e) => {
-      throw e;
-    });
+    .toPromise();
 
   const indexedArtists = artists.reduce<{
     [key: string]: { group: string; artists: typeof artists };

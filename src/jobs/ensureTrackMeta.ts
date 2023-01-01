@@ -17,10 +17,7 @@ export default function ensureTrackMeta(item: LibraryItem) {
 
     const track = await TrackRepository.getById(hash(libraryPathRel(item.path)))
       .include((t) => t.album)
-      .toPromise()
-      .catch((e) => {
-        throw e;
-      });
+      .toPromise();
 
     if (track && !track.metaFetched) {
       const libPath = libraryPath(track.path);

@@ -16,10 +16,7 @@ export default async function getPlaylists(
     .orderBy((p) => p.updatedAt)
     .include((p) => p.tracks)
     .thenInclude((playlistTrack) => playlistTrack.track)
-    .toPromise()
-    .catch((e) => {
-      throw e;
-    });
+    .toPromise();
 
   const response: GetPlaylistsResponse = {
     playlists: {

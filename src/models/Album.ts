@@ -118,15 +118,9 @@ export class Album extends BaseEntity {
       .where((t) => t.album)
       .equal(this.id);
 
-    this.trackCount = await tracksQuery.count().catch((e) => {
-      throw e;
-    });
+    this.trackCount = await tracksQuery.count();
 
-    this.duration = (
-      await tracksQuery.toPromise().catch((e) => {
-        throw e;
-      })
-    )
+    this.duration = (await tracksQuery.toPromise())
       .map((t) => t.duration || 0)
       .reduce((acc, current) => (acc += current), 0);
   }

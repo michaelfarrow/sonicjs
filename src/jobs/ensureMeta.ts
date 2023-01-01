@@ -46,18 +46,10 @@ export default function ensureMeta(item: LibraryItem) {
     const parentId = hash(libraryPathRel(item.parent));
 
     const artist = item.parent
-      ? await ArtistRepository.getById(parentId)
-          .toPromise()
-          .catch((e) => {
-            throw e;
-          })
+      ? await ArtistRepository.getById(parentId).toPromise()
       : null;
     const album = item.parent
-      ? await AlbumRepository.getById(parentId)
-          .toPromise()
-          .catch((e) => {
-            throw e;
-          })
+      ? await AlbumRepository.getById(parentId).toPromise()
       : null;
 
     if (
