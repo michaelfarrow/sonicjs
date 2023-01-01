@@ -5,14 +5,14 @@ import { ImageRepository } from '@/db';
 import { Error as ErrorCodes } from '@/error';
 import { imagePath, libraryPath } from '@/utils/path';
 import genericHandler from './generic';
-import Image from '@/models/Image';
 
 export default genericHandler(
   (z) => ({
-    id: z.string(),
-    // .regex(
-    //   /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)\|[a-fA-F0-9]{64}$/i
-    // ),
+    id: z
+      .string()
+      .regex(
+        /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)\|[a-fA-F0-9]{64}$/i
+      ),
     size: z.coerce.number().int().min(10).optional(),
   }),
   async ({ id: idHash, size }, next, res) => {
