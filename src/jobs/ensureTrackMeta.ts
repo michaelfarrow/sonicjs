@@ -15,9 +15,9 @@ export default function ensureTrackMeta(item: LibraryItem) {
   return async () => {
     log('ensuring track meta', libraryPathRel(item.path));
 
-    const track = await TrackRepository.getById(
-      hash(libraryPathRel(item.path))
-    ).toPromise();
+    const track = await TrackRepository.getById(hash(libraryPathRel(item.path)))
+      .include((t) => t.album)
+      .toPromise();
 
     if (track && !track.metaFetched) {
       const libPath = libraryPath(track.path);
@@ -37,6 +37,9 @@ export default function ensureTrackMeta(item: LibraryItem) {
       track.metaFetched = true;
 
       await track.save();
+
+      await track.album.updateTrackInfo();
+      await track.album.save();
     }
   };
 }

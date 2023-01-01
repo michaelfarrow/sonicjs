@@ -11,7 +11,6 @@ import ensureTrackMeta from '@/jobs/ensureTrackMeta';
 import ensureImage from '@/jobs/ensureImage';
 import removeItem from '@/jobs/removeItem';
 import cleanup from '@/jobs/cleanup';
-import updateAlbumTrackInfo from '@/jobs/updateAlbumTrackInfo';
 
 const MUSIC_TYPES = ['m4a', 'mp3'];
 const IMAGE_TYPES = ['jpg', 'jpeg', 'png', 'webp'];
@@ -149,7 +148,6 @@ export async function initLibrary() {
         console.log('initial library scan complete.');
 
         scanQueue.push(cleanup);
-        scanQueue.push(updateAlbumTrackInfo);
 
         if (scanQueue.length) {
           scanQueue.start();
