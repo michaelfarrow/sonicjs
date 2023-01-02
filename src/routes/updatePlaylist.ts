@@ -69,6 +69,10 @@ export default genericHandler(
         ? songIndexToRemove
         : [songIndexToRemove];
 
+      for (let i = 0; i < playlist.tracks.length; i++) {
+        if (_songIndexToRemove.includes(i)) playlist.tracks[i].remove();
+      }
+
       playlist.tracks = playlist.tracks.filter(
         ({}, i) => !_songIndexToRemove.includes(i)
       );
