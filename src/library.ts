@@ -112,6 +112,7 @@ export async function initLibrary() {
       .watch(watchDir, {
         depth: 2,
         ignored: /\/db\..*?$/,
+        awaitWriteFinish: true,
       })
       .on('addDir', (dirPath) => {
         if (dirPath === watchDir) return;
