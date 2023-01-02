@@ -110,7 +110,9 @@ export class Track extends BaseEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => Album)
+  @ManyToOne(() => Album, {
+    onDelete: 'CASCADE',
+  })
   album: Album;
 
   @OneToMany(() => PlaylistTrack, (playlistTrack) => playlistTrack.track)
