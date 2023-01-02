@@ -15,7 +15,7 @@ export default genericHandler(
   async ({ id }, next, res) => {
     const playlist = await PlaylistRepository.getById(id)
       .include((p) => p.tracks)
-      .orderByDescending((playlistTrack) => playlistTrack.id)
+      .orderBy((playlistTrack) => playlistTrack.id)
       .include((p) => p.tracks)
       .thenInclude((playlistTrack) => playlistTrack.track)
       .thenInclude((track) => track.album)
