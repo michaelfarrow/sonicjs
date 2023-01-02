@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { Error as ErrorCodes } from '../error';
+import { Error as ErrorCodes } from '@/error';
 
-export default function xmlMiddleware(
+export default function errorMiddleware(
   error: any,
   req: Request,
   res: Response,
