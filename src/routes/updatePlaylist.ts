@@ -49,18 +49,19 @@ export default genericHandler(
         Array.isArray(songIdToAdd) ? songIdToAdd : [songIdToAdd]
       ).filter((song) => !existingTracks.includes(song));
 
-      const tracksToAdd = await TrackRepository.getAll()
-        .where((t) => t.id)
-        .in(_songIdToAdd)
-        .toPromise();
+      for (const songIdToAdd of _songIdToAdd) {
+        const trackToAdd = await TrackRepository.getById(
+          songIdToAdd
+        ).toPromise();
 
-      for (const trackToAdd of tracksToAdd) {
-        const playlistTrack = new PlaylistTrack();
-        playlistTrack.playlist = playlist;
-        playlistTrack.track = trackToAdd;
-        await playlistTrack.save();
+        if (trackToAdd) {
+          const playlistTrack = new PlaylistTrack();
+          playlistTrack.playlist = playlist;
+          playlistTrack.track = trackToAdd;
+          await playlistTrack.save();
 
-        playlist.tracks.push(playlistTrack);
+          playlist.tracks.push(playlistTrack);
+        }
       }
     }
 
