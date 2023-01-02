@@ -88,7 +88,7 @@ export default genericHandler(
 
     const albums = await query.toPromise();
 
-    const response: any = {
+    const response: GetAlbumList2Response = {
       albumList2: {
         album: albums.map((album) => albumResponse(album)),
       },

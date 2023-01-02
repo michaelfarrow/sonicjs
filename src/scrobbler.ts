@@ -31,7 +31,7 @@ export default function srobble(id: string | string[]) {
         played.getTime() - track.lastPlayed.getTime() >
           (track.duration || 60 * 3) * 1000
       ) {
-        track.album.plays = null as any;
+        track.album.plays = track.album.plays + 1;
         track.album.lastPlayed = played;
         await track.album.save();
 

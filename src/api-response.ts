@@ -12,7 +12,11 @@ import Album from '@/models/Album';
 import Track from '@/models/Track';
 import Playlist from '@/models/Playlist';
 
-export function trackResponse(track: Track, album: Album = track.album): Child {
+export function trackResponse(
+  track: Track,
+  album: Album = track.album,
+  artist: Artist = album.artist
+): Child {
   const multiArtist =
     !!track.artist && !!track.albumArtist && track.artist !== track.albumArtist;
 
@@ -21,8 +25,8 @@ export function trackResponse(track: Track, album: Album = track.album): Child {
     title: track.name || track.item,
     artist: multiArtist
       ? (track?.artist as string)
-      : album?.artist.name || album?.artist.item,
-    artistId: !multiArtist ? album?.artist.id : undefined,
+      : artist?.name || artist?.item,
+    artistId: !multiArtist ? artist?.id : undefined,
     parent: album?.id || undefined,
     path: track.path,
     album: album?.name || album?.item,

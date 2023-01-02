@@ -1,4 +1,5 @@
 import { Router, Handler } from 'express';
+import logRequest from '@/middleware/logRequest';
 import auth from '@/middleware/auth';
 import error from '@/middleware/error';
 import response from '@/middleware/response';
@@ -29,9 +30,11 @@ import updatePlaylist from '@/routes/updatePlaylist';
 import deletePlaylist from '@/routes/deletePlaylist';
 import getPlaylists from '@/routes/getPlaylists';
 import getPlaylist from '@/routes/getPlaylist';
+import getTopSongs from '@/routes/getTopSongs';
 
 const api = Router();
 
+api.use(logRequest);
 api.use(auth);
 
 const route = (path: string, f: Handler) => api.get(`${path}\.:ext?`, f);
@@ -65,6 +68,7 @@ route('/updatePlaylist', updatePlaylist);
 route('/deletePlaylist', deletePlaylist);
 route('/getPlaylists', getPlaylists);
 route('/getPlaylist', getPlaylist);
+route('/getTopSongs', getTopSongs);
 
 api.use(notFound);
 api.use(error);
