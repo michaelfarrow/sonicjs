@@ -1,10 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { MusicFolder } from '../types';
+import { MusicFolders } from '@/types';
 
 export type GetMusicFoldersResponse = {
-  musicFolders: {
-    musicFolder: MusicFolder[];
-  };
+  musicFolders: MusicFolders;
 };
 
 export default function getMusicFolders(

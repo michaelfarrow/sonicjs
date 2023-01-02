@@ -1,11 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
-import { Genre } from '@/types';
+import { Genres } from '@/types';
 import { GenreRepository } from '@/db';
 
-export type GetStarred2Response = {
-  genres: {
-    genre: Genre[];
-  };
+export type GetGenresResponse = {
+  genres: Genres;
 };
 
 export default async function getGenres(
@@ -18,7 +16,7 @@ export default async function getGenres(
     .include((g) => g.albums)
     .toPromise();
 
-  const response: GetStarred2Response = {
+  const response: GetGenresResponse = {
     genres: {
       genre: genres.map((genre) => ({
         value: genre.name,

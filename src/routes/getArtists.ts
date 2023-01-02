@@ -2,18 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import _ from 'lodash';
 import { IGNORED_ARTICLES } from '@/config';
 import { ignoredArticlesRegex } from '@/utils/library';
-import { ArtistID3 } from '@/types';
+import { ArtistsID3 } from '@/types';
 import { ArtistRepository } from '@/db';
 import { artistResponse } from '@/api-response';
 
 export type GetArtistsResponse = {
-  artists: {
-    ignoredArticles: string;
-    index: {
-      name: string;
-      artist: ArtistID3[];
-    }[];
-  };
+  artists: ArtistsID3;
 };
 
 export default async function (

@@ -1,12 +1,16 @@
 export { default as MusicFolder } from './MusicFolder';
+export { default as MusicFolders } from './MusicFolders';
 export { default as AlbumID3 } from './AlbumID3';
 export { default as ArtistID3 } from './ArtistID3';
+export { default as ArtistsID3 } from './ArtistsID3';
 export { default as ArtistWithAlbumsID3 } from './ArtistWithAlbumsID3';
 export { default as AlbumWithSongsID3 } from './AlbumWithSongsID3';
+export { default as AlbumList2 } from './AlbumList2';
 export { default as SearchResult3 } from './SearchResult3';
 export { default as Starred2 } from './Starred2';
 export { default as Child } from './Child';
 export { default as Genre } from './Genre';
+export { default as Genres } from './Genres';
 export { default as MediaType } from './MediaType';
 export { default as ArtistInfoBase } from './ArtistInfoBase';
 export { default as ArtistInfo2 } from './ArtistInfo2';
