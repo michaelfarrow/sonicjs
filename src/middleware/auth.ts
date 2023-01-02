@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Error } from '../error';
+import { Error } from '@/error';
 import crypto from 'crypto';
 import { AUTH_USER, AUTH_PASS } from '@/config';
 

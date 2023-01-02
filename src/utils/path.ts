@@ -1,5 +1,5 @@
 import path from 'path';
-import { LIBRARY_PATH, IMAGE_DIR } from '../config';
+import { LIBRARY_PATH, IMAGE_DIR } from '@/config';
 
 export function imagePath(id: string) {
   return path.resolve(IMAGE_DIR, `${id}`);
