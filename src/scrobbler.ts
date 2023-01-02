@@ -11,10 +11,6 @@ q.on('error', (error) => {
   log(error);
 });
 
-q.on('end', (error) => {
-  error && log(error);
-});
-
 export default function srobble(id: string | string[]) {
   q.push(async () => {
     const tracks = await TrackRepository.getAll()

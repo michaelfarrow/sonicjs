@@ -1,3 +1,4 @@
+import log from '@/logger';
 import queue from 'queue';
 
 const CONCURRENCY = 1;
@@ -13,12 +14,7 @@ const jobsQueue = queue({
 // });
 
 jobsQueue.on('error', (error, job) => {
-  console.log('queue job error');
-  console.error(error);
-});
-
-jobsQueue.on('end', (error) => {
-  error && console.error(error);
+  log(error);
 });
 
 export default jobsQueue;
