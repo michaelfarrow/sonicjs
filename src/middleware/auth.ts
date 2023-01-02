@@ -1,9 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { Error } from '../error';
 import crypto from 'crypto';
-
-const USERNAME = 'admin';
-const PASSWORD = 'pass';
+import { AUTH_USER, AUTH_PASS } from '@/config';
 
 export default function authMiddleware(
   req: Request,
@@ -22,14 +20,14 @@ export default function authMiddleware(
   }
 
   if (password.length) {
-    authenticated = username === USERNAME && password === PASSWORD;
+    authenticated = username === AUTH_USER && password === AUTH_PASS;
   } else {
     let hashedPassword = crypto
       .createHash('md5')
-      .update(`${PASSWORD}${salt}`)
+      .update(`${AUTH_PASS}${salt}`)
       .digest('hex');
 
-    authenticated = username === USERNAME && token === hashedPassword;
+    authenticated = username === AUTH_USER && token === hashedPassword;
   }
 
   if (authenticated) {
