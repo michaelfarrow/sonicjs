@@ -18,6 +18,7 @@ export default function srobble(id: string | string[]) {
       .in(Array.isArray(id) ? id : [id])
       .include((a) => a.album)
       .toPromise();
+
     const played = new Date();
 
     for (const track of tracks) {
