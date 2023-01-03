@@ -3,6 +3,9 @@ import log from '@/logger';
 import { initLibrary } from '@/library';
 import { initDb } from '@/db';
 import { initCron } from '@/cron-jobs';
+import sharp from 'sharp';
+
+sharp.cache(false);
 
 const port = process.env.PORT || 3000;
 
