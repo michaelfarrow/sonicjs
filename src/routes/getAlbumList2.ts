@@ -1,12 +1,10 @@
-import { AlbumID3 } from '@/types';
+import { AlbumList2 } from '@/types';
 import { AlbumRepository } from '@/db';
 import { albumResponse } from '@/api-response';
 import genericHandler from './generic';
 
 export type GetAlbumList2Response = {
-  albumList2: {
-    album: AlbumID3[];
-  };
+  albumList2: AlbumList2;
 };
 
 export default genericHandler(
@@ -42,7 +40,7 @@ export default genericHandler(
         query
           .where((a) => a.plays)
           .notEqual(0)
-          .orderByDescending((a) => a.createdAt);
+          .orderByDescending((a) => a.plays);
         break;
       case 'recent':
         query
