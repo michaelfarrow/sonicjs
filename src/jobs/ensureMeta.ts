@@ -74,7 +74,7 @@ export default function ensureMeta(item: LibraryItem) {
             .replace(/\n+/g, '\n')
             .split(/\n/g)
             .map((p) => p.trim())
-            .join('\n')) ||
+            .join('\n\n')) ||
         null;
       artist.metaFetched = true;
 
