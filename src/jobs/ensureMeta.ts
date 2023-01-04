@@ -53,9 +53,10 @@ export default function ensureMeta(item: LibraryItem) {
       : null;
 
     if (
-      (!artist && !album) ||
+      !artist &&
+      !album /*||
       (artist && artist.metaFetched) ||
-      (album && album.metaFetched)
+      (album && album.metaFetched) */
     ) {
       return false;
     }
@@ -83,12 +84,18 @@ export default function ensureMeta(item: LibraryItem) {
 
     if (album) {
       const info = await mbApi.lookupRelease(mbid, ['release-groups']);
-      const year = info['release-events']?.[0]?.date?.match(/\d+/)?.[0];
       const releaseGroup = info['release-group']?.id;
 
       const releaseGroupInfo = releaseGroup
-        ? await mbApi.lookupReleaseGroup(releaseGroup, ['genres'])
+        ? await mbApi.lookupReleaseGroup(releaseGroup, ['genres', 'releases'])
         : null;
+
+      const releaseInfo: string | null | undefined =
+        (releaseGroupInfo as any)?.['first-release-date'] ||
+        releaseGroupInfo?.releases?.[0]?.date ||
+        info['release-events']?.[0]?.date;
+
+      const year = releaseInfo?.match(/\d+/)?.[0];
 
       const genres: Genre[] = (
         releaseGroupInfo
