@@ -53,10 +53,9 @@ export default function ensureMeta(item: LibraryItem) {
       : null;
 
     if (
-      !artist &&
-      !album /*||
+      (!artist && !album) ||
       (artist && artist.metaFetched) ||
-      (album && album.metaFetched) */
+      (album && album.metaFetched)
     ) {
       return false;
     }
