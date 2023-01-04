@@ -22,8 +22,9 @@ function artistGenresIds(artist: Artist) {
 export default genericHandler(
   (z) => ({
     id: z.string().uuid(),
+    count: z.coerce.number().optional(),
   }),
-  async ({ id }, next, res) => {
+  async ({ id, count }, next, res) => {
     const artist = await ArtistRepository.getById(id)
       .include((a) => a.albums)
       .thenInclude((album) => album.genres)
@@ -63,6 +64,7 @@ export default genericHandler(
                 .length * -1
           )
           .map((artist) => artistResponse(artist))
+          .take(count)
           .value(),
       },
     };
