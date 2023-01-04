@@ -73,6 +73,7 @@ export default genericHandler(
         break;
       case 'byGenre':
         query
+          .orderBy((a) => a.sortName)
           .join((a) => a.genres)
           .where((g) => g.name)
           .equal(genre || '');
