@@ -89,10 +89,9 @@ export default function ensureMeta(item: LibraryItem) {
         ? await mbApi.lookupReleaseGroup(releaseGroup, ['genres', 'releases'])
         : null;
 
-      const releaseInfo: string | null | undefined =
-        (releaseGroupInfo as any)?.['first-release-date'] ||
-        releaseGroupInfo?.releases?.[0]?.date ||
-        info['release-events']?.[0]?.date;
+      const releaseInfo: string | null | undefined = (
+        releaseGroupInfo as any
+      )?.['first-release-date'];
 
       const year = releaseInfo?.match(/\d+/)?.[0];
 
