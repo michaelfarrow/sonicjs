@@ -39,7 +39,7 @@ function getBiography(mbid: string): Promise<string | undefined> {
   });
 }
 
-export default function ensureMeta(item: LibraryItem) {
+export default function ensureMeta(item: LibraryItem, rescan: boolean = false) {
   return async () => {
     log('ensuring meta', libraryPathRel(item.path));
 
@@ -54,8 +54,8 @@ export default function ensureMeta(item: LibraryItem) {
 
     if (
       (!artist && !album) ||
-      (artist && artist.metaFetched) ||
-      (album && album.metaFetched)
+      (((artist && artist.metaFetched) || (album && album.metaFetched)) &&
+        !rescan)
     ) {
       return false;
     }

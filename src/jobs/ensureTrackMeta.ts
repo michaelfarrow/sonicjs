@@ -11,7 +11,10 @@ import { TrackRepository } from '@/db';
 // const splitArtists = (artists: string) => artists.split(/\s*;\s*/g);
 // const splitGenres = (genres: string) => genres.split(/\s*,\s*/g);
 
-export default function ensureTrackMeta(item: LibraryItem) {
+export default function ensureTrackMeta(
+  item: LibraryItem,
+  rescan: boolean = false
+) {
   return async () => {
     log('ensuring track meta', libraryPathRel(item.path));
 
@@ -19,7 +22,7 @@ export default function ensureTrackMeta(item: LibraryItem) {
       .include((t) => t.album)
       .toPromise();
 
-    if (track && !track.metaFetched) {
+    if (track && (!track.metaFetched || rescan)) {
       const libPath = libraryPath(track.path);
       const meta = await parseFile(libPath);
       const stat = await fs.stat(libPath);
