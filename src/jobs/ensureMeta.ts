@@ -66,19 +66,21 @@ export default function ensureMeta(item: LibraryItem) {
       const info = await mbApi.lookupArtist(mbid);
       const bio = await getBiography(mbid);
 
-      artist.mbid = mbid;
-      artist.name = info.name;
-      artist.bio =
-        (bio &&
-          bio
-            .replace(/\n+/g, '\n')
-            .split(/\n/g)
-            .map((p) => p.trim())
-            .join('\n\n')) ||
-        null;
-      artist.metaFetched = true;
+      if (info) {
+        artist.mbid = mbid;
+        artist.name = info.name;
+        artist.bio =
+          (bio &&
+            bio
+              .replace(/\n+/g, '\n')
+              .split(/\n/g)
+              .map((p) => p.trim())
+              .join('\n\n')) ||
+          null;
+        artist.metaFetched = true;
 
-      await artist.save();
+        await artist.save();
+      }
     }
 
     if (album) {
@@ -89,33 +91,35 @@ export default function ensureMeta(item: LibraryItem) {
         ? await mbApi.lookupReleaseGroup(releaseGroup, ['genres', 'releases'])
         : null;
 
-      const releaseInfo: string | null | undefined = (
-        releaseGroupInfo as any
-      )?.['first-release-date'];
+      if (info && releaseGroup) {
+        const releaseInfo: string | null | undefined = (
+          releaseGroupInfo as any
+        )?.['first-release-date'];
 
-      const year = releaseInfo?.match(/\d+/)?.[0];
+        const year = releaseInfo?.match(/\d+/)?.[0];
 
-      const genres: Genre[] = (
-        releaseGroupInfo
-          ? (releaseGroupInfo as any).genres.map((genre: any) => genre.name)
-          : []
-      ).map((genre: string) => {
-        const g = new Genre();
-        g.id = hash(genre);
-        g.name = genre;
-        return g;
-      });
+        const genres: Genre[] = (
+          releaseGroupInfo
+            ? (releaseGroupInfo as any).genres.map((genre: any) => genre.name)
+            : []
+        ).map((genre: string) => {
+          const g = new Genre();
+          g.id = hash(genre);
+          g.name = genre;
+          return g;
+        });
 
-      for (const genre of genres) {
-        await genre.save();
+        for (const genre of genres) {
+          await genre.save();
+        }
+
+        album.name = info.title;
+        album.year = (year && Number(year)) || null;
+        album.genres = genres;
+        album.metaFetched = true;
+
+        await album.save();
       }
-
-      album.name = info.title;
-      album.year = (year && Number(year)) || null;
-      album.genres = genres;
-      album.metaFetched = true;
-
-      await album.save();
     }
 
     return true;
