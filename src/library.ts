@@ -62,7 +62,7 @@ function relPath(p: string) {
 }
 
 function onAddDir(dirPath: string) {
-  if (dirPath === watchDir) return;
+  if (dirPath.indexOf(watchDir) !== 0 || dirPath === watchDir) return;
 
   const parentDir = path.dirname(dirPath);
   const relativePath = relPath(dirPath);
