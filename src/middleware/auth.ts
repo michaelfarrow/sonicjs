@@ -3,6 +3,13 @@ import { Error } from '@/error';
 import crypto from 'crypto';
 import { AUTH_USER, AUTH_PASS } from '@/config';
 
+function hexToString(hex: string) {
+  var str = '';
+  for (var i = 0; i < hex.length; i += 2)
+    str += String.fromCharCode(parseInt(hex.substring(i, i + 2), 16));
+  return str;
+}
+
 export default function authMiddleware(
   req: Request,
   res: Response,
@@ -20,7 +27,10 @@ export default function authMiddleware(
   }
 
   if (password.length) {
-    authenticated = username === AUTH_USER && password === AUTH_PASS;
+    const encoded = password.match(/^enc:(.*?)$/);
+    authenticated =
+      username === AUTH_USER &&
+      (encoded ? hexToString(encoded[1]) : password) === AUTH_PASS;
   } else {
     let hashedPassword = crypto
       .createHash('md5')
