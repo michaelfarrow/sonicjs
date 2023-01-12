@@ -91,7 +91,7 @@ export default function ensureMeta(item: LibraryItem, rescan: boolean = false) {
         ? await mbApi.lookupReleaseGroup(releaseGroup, ['genres', 'releases'])
         : null;
 
-      if (info && releaseGroup) {
+      if (info && releaseGroupInfo) {
         const releaseInfo: string | null | undefined = (
           releaseGroupInfo as any
         )?.['first-release-date'];

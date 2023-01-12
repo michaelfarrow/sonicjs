@@ -15,13 +15,6 @@
     }
   },
   "files": ["./node_modules/@types/node/index.d.ts"],
-  "include": [
-    "src/**/*.ts",
-    "src-old/api-response.old.ts",
-    "src-old/api-response.old.ts",
-    "src-old/db.old.ts",
-    "src-old/db.old.ts",
-    "src-old/getAlbumList2.old.ts"
-  ],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
 }
