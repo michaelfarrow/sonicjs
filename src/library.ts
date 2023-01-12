@@ -178,11 +178,11 @@ export async function initLibrary() {
   });
 }
 
-export function rescan() {
+export function rescan(refetch?: boolean) {
   Object.entries(watcher.getWatched()).forEach(([dir, files]) => {
     onAddDir(dir);
     files.forEach((file) => {
-      onAddChange(path.resolve(dir, file), true);
+      onAddChange(path.resolve(dir, file), !!refetch);
     });
   });
 }

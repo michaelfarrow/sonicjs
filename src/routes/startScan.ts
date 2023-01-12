@@ -8,7 +8,7 @@ export default function startScan(
   res: Response,
   next: NextFunction
 ): void {
-  if (!scanQueue.length) rescan();
+  if (!scanQueue.length) rescan(true);
 
   return scanStatus(req, res, next);
 }
